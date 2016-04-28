@@ -17305,178 +17305,10 @@ function Stream(source) {
 /** @author Brian Cavalier */
 /** @author John Hann */
 
-exports.noop = noop;
-exports.identity = identity;
-exports.compose = compose;
-exports.apply = apply;
-
-exports.cons = cons;
-exports.append = append;
-exports.drop = drop;
-exports.tail = tail;
-exports.copy = copy;
-exports.map = map;
-exports.reduce = reduce;
-exports.replace = replace;
-exports.remove = remove;
-exports.removeAll = removeAll;
-exports.findIndex = findIndex;
-exports.isArrayLike = isArrayLike;
-
-function noop() {}
-
-function identity(x) {
-	return x;
-}
-
-function compose(f, g) {
-	return function(x) {
-		return f(g(x));
-	};
-}
-
-function apply(f, x) {
-	return f(x);
-}
-
-function cons(x, array) {
-	var l = array.length;
-	var a = new Array(l + 1);
-	a[0] = x;
-	for(var i=0; i<l; ++i) {
-		a[i + 1] = array[i];
-	}
-	return a;
-}
-
-function append(x, a) {
-	var l = a.length;
-	var b = new Array(l+1);
-	for(var i=0; i<l; ++i) {
-		b[i] = a[i];
-	}
-
-	b[l] = x;
-	return b;
-}
-
-function drop(n, array) {
-	var l = array.length;
-	if(n >= l) {
-		return [];
-	}
-
-	l -= n;
-	var a = new Array(l);
-	for(var i=0; i<l; ++i) {
-		a[i] = array[n+i];
-	}
-	return a;
-}
-
-function tail(array) {
-	return drop(1, array);
-}
-
-function copy(array) {
-	var l = array.length;
-	var a = new Array(l);
-	for(var i=0; i<l; ++i) {
-		a[i] = array[i];
-	}
-	return a;
-}
-
-function map(f, array) {
-	var l = array.length;
-	var a = new Array(l);
-	for(var i=0; i<l; ++i) {
-		a[i] = f(array[i]);
-	}
-	return a;
-}
-
-function reduce(f, z, array) {
-	var r = z;
-	for(var i=0, l=array.length; i<l; ++i) {
-		r = f(r, array[i], i);
-	}
-	return r;
-}
-
-function replace(x, i, array) {
-	var l = array.length;
-	var a = new Array(l);
-	for(var j=0; j<l; ++j) {
-		a[j] = i === j ? x : array[j];
-	}
-	return a;
-}
-
-function remove(index, array) {
-	var l = array.length;
-	if(l === 0 || index >= array) { // exit early if index beyond end of array
-		return array;
-	}
-
-	if(l === 1) { // exit early if index in bounds and length === 1
-		return [];
-	}
-
-	return unsafeRemove(index, array, l-1);
-}
-
-function unsafeRemove(index, a, l) {
-	var b = new Array(l);
-	var i;
-	for(i=0; i<index; ++i) {
-		b[i] = a[i];
-	}
-	for(i=index; i<l; ++i) {
-		b[i] = a[i+1];
-	}
-
-	return b;
-}
-
-function removeAll(f, a) {
-	var l = a.length;
-	var b = new Array(l);
-	for(var x, i=0, j=0; i<l; ++i) {
-		x = a[i];
-		if(!f(x)) {
-			b[j] = x;
-			++j;
-		}
-	}
-
-	b.length = j;
-	return b;
-}
-
-function findIndex(x, a) {
-	for (var i = 0, l = a.length; i < l; ++i) {
-		if (x === a[i]) {
-			return i;
-		}
-	}
-	return -1;
-}
-
-function isArrayLike(x){
-   return x != null && typeof x.length === 'number' && typeof x !== 'function';
-}
-
-},{}],104:[function(require,module,exports){
-/** @license MIT License (c) copyright 2010-2016 original author or authors */
-/** @author Brian Cavalier */
-/** @author John Hann */
-
 var Stream = require('../Stream');
 var Pipe = require('../sink/Pipe');
 var runSource = require('../runSource');
 var cons = require('./build').cons;
-var noop = require('../base').noop;
 
 exports.scan = scan;
 exports.reduce = reduce;
@@ -17550,13 +17382,15 @@ AccumulateSink.prototype.end = function(t) {
 	this.sink.end(t, this.value);
 };
 
-},{"../Stream":102,"../base":103,"../runSource":138,"../sink/Pipe":147,"./build":106}],105:[function(require,module,exports){
+function noop() {}
+
+},{"../Stream":102,"../runSource":137,"../sink/Pipe":146,"./build":105}],104:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
 
 var combine = require('./combine').combine;
-var apply = require('../base').apply;
+var apply = require('@most/prelude').apply;
 
 exports.ap  = ap;
 
@@ -17574,7 +17408,7 @@ function ap(fs, xs) {
 	return combine(apply, fs, xs);
 }
 
-},{"../base":103,"./combine":107}],106:[function(require,module,exports){
+},{"./combine":106,"@most/prelude":3}],105:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -17619,7 +17453,7 @@ function cycle(stream) {
 	}, stream);
 }
 
-},{"../source/core":151,"./continueWith":109}],107:[function(require,module,exports){
+},{"../source/core":151,"./continueWith":108}],106:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -17630,7 +17464,7 @@ var core = require('../source/core');
 var Pipe = require('../sink/Pipe');
 var IndexSink = require('../sink/IndexSink');
 var dispose = require('../disposable/dispose');
-var base = require('../base');
+var base = require('@most/prelude');
 var invoke = require('../invoke');
 
 var hasValue = IndexSink.hasValue;
@@ -17723,13 +17557,12 @@ CombineSink.prototype.end = function(t, indexedValue) {
 	}
 };
 
-},{"../Stream":102,"../base":103,"../disposable/dispose":131,"../invoke":136,"../sink/IndexSink":145,"../sink/Pipe":147,"../source/core":151,"./transform":126}],108:[function(require,module,exports){
+},{"../Stream":102,"../disposable/dispose":130,"../invoke":135,"../sink/IndexSink":144,"../sink/Pipe":146,"../source/core":151,"./transform":125,"@most/prelude":3}],107:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
 
-var mergeConcurrently = require('./mergeConcurrently').mergeConcurrently;
-var map = require('./transform').map;
+var mergeMapConcurrently = require('./mergeConcurrently').mergeMapConcurrently;
 
 exports.concatMap = concatMap;
 
@@ -17745,10 +17578,10 @@ exports.concatMap = concatMap;
  * @returns {Stream} new stream containing all events from each stream returned by f
  */
 function concatMap(f, stream) {
-	return mergeConcurrently(1, map(f, stream));
+	return mergeMapConcurrently(f, 1, stream);
 }
 
-},{"./mergeConcurrently":117,"./transform":126}],109:[function(require,module,exports){
+},{"./mergeConcurrently":116}],108:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -17817,7 +17650,7 @@ ContinueWithSink.prototype.dispose = function() {
 	return this.disposable.dispose();
 };
 
-},{"../Promise":100,"../Stream":102,"../disposable/dispose":131,"../sink/Pipe":147}],110:[function(require,module,exports){
+},{"../Promise":100,"../Stream":102,"../disposable/dispose":130,"../sink/Pipe":146}],109:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -17872,16 +17705,18 @@ DelaySink.prototype.end = function(t, x) {
 
 DelaySink.prototype.error = Sink.prototype.error;
 
-},{"../Stream":102,"../disposable/dispose":131,"../scheduler/PropagateTask":139,"../sink/Pipe":147}],111:[function(require,module,exports){
+},{"../Stream":102,"../disposable/dispose":130,"../scheduler/PropagateTask":138,"../sink/Pipe":146}],110:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
 
 var Stream = require('../Stream');
 var ValueSource = require('../source/ValueSource');
-var tryDispose = require('../disposable/dispose').tryDispose;
+var SafeSink = require('../sink/SafeSink');
+var Pipe = require('../sink/Pipe');
+var dispose = require('../disposable/dispose');
 var tryEvent = require('../source/tryEvent');
-var apply = require('../base').apply;
+var isPromise = require('../Promise').isPromise;
 
 exports.flatMapError = recoverWith;
 exports.recoverWith  = recoverWith;
@@ -17922,44 +17757,44 @@ RecoverWith.prototype.run = function(sink, scheduler) {
 
 function RecoverWithSink(f, source, sink, scheduler) {
 	this.f = f;
-	this.sink = sink;
+	this.sink = new SafeSink(sink);
 	this.scheduler = scheduler;
-	this.active = true;
 	this.disposable = source.run(this, scheduler);
 }
 
-RecoverWithSink.prototype.error = function(t, e) {
-	if(!this.active) {
-		return;
-	}
-
-	// TODO: forward dispose errors
-	tryDispose(t, this.disposable, this);
-
-	var stream = apply(this.f, e);
-	this.disposable = stream.source.run(this.sink, this.scheduler);
-};
-
 RecoverWithSink.prototype.event = function(t, x) {
-	if(!this.active) {
-		return;
-	}
-	tryEvent.tryEvent(t, x, this.sink);
-};
+		tryEvent.tryEvent(t, x, this.sink);
+}
 
 RecoverWithSink.prototype.end = function(t, x) {
-	if(!this.active) {
-		return;
-	}
-	tryEvent.tryEnd(t, x, this.sink);
+		tryEvent.tryEnd(t, x, this.sink);
+}
+
+RecoverWithSink.prototype.error = function(t, e) {
+	var nextSink = this.sink.disable();
+
+	var result = dispose.tryDispose(t, this.disposable, nextSink);
+	this.disposable = isPromise(result)
+		? dispose.promised(this._thenContinue(result, e, nextSink))
+		: this._continue(this.f, e, nextSink);
+};
+
+RecoverWithSink.prototype._thenContinue = function(p, x, sink) {
+	var self = this;
+	return p.then(function () {
+		return self._continue(self.f, x, sink);
+	});
+};
+
+RecoverWithSink.prototype._continue = function(f, x, sink) {
+	return f(x).source.run(sink, this.scheduler);
 };
 
 RecoverWithSink.prototype.dispose = function() {
-	this.active = false;
 	return this.disposable.dispose();
 };
 
-},{"../Stream":102,"../base":103,"../disposable/dispose":131,"../source/ValueSource":150,"../source/tryEvent":160}],112:[function(require,module,exports){
+},{"../Promise":100,"../Stream":102,"../disposable/dispose":130,"../sink/Pipe":146,"../sink/SafeSink":147,"../source/ValueSource":150,"../source/tryEvent":160}],111:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -18035,13 +17870,13 @@ function same(a, b) {
 	return a === b;
 }
 
-},{"../Stream":102,"../fusion/Filter":133,"../sink/Pipe":147}],113:[function(require,module,exports){
+},{"../Stream":102,"../fusion/Filter":132,"../sink/Pipe":146}],112:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
 
 var mergeConcurrently = require('./mergeConcurrently').mergeConcurrently;
-var map = require('./transform').map;
+var mergeMapConcurrently = require('./mergeConcurrently').mergeMapConcurrently;
 
 exports.flatMap = flatMap;
 exports.join = join;
@@ -18054,7 +17889,7 @@ exports.join = join;
  * @returns {Stream} new stream containing all events from each stream returned by f
  */
 function flatMap(f, stream) {
-	return join(map(f, stream));
+	return mergeMapConcurrently(f, Infinity, stream);
 }
 
 /**
@@ -18067,7 +17902,7 @@ function join(stream) {
 	return mergeConcurrently(Infinity, stream);
 }
 
-},{"./mergeConcurrently":117,"./transform":126}],114:[function(require,module,exports){
+},{"./mergeConcurrently":116}],113:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -18179,7 +18014,7 @@ DebounceSink.prototype._clearTimer = function() {
 	return true;
 };
 
-},{"../Stream":102,"../disposable/dispose":131,"../scheduler/PropagateTask":139,"../sink/Pipe":147}],115:[function(require,module,exports){
+},{"../Stream":102,"../disposable/dispose":130,"../scheduler/PropagateTask":138,"../sink/Pipe":146}],114:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -18232,7 +18067,7 @@ LoopSink.prototype.end = function(t) {
 	this.sink.end(t, this.seed);
 };
 
-},{"../Stream":102,"../sink/Pipe":147}],116:[function(require,module,exports){
+},{"../Stream":102,"../sink/Pipe":146}],115:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -18242,7 +18077,7 @@ var Pipe = require('../sink/Pipe');
 var IndexSink = require('../sink/IndexSink');
 var empty = require('../source/core').empty;
 var dispose = require('../disposable/dispose');
-var base = require('../base');
+var base = require('@most/prelude');
 
 var copy = base.copy;
 var reduce = base.reduce;
@@ -18330,7 +18165,7 @@ MergeSink.prototype.end = function(t, indexedValue) {
 	}
 };
 
-},{"../Stream":102,"../base":103,"../disposable/dispose":131,"../sink/IndexSink":145,"../sink/Pipe":147,"../source/core":151}],117:[function(require,module,exports){
+},{"../Stream":102,"../disposable/dispose":130,"../sink/IndexSink":144,"../sink/Pipe":146,"../source/core":151,"@most/prelude":3}],116:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -18338,23 +18173,31 @@ MergeSink.prototype.end = function(t, indexedValue) {
 var Stream = require('../Stream');
 var dispose = require('../disposable/dispose');
 var LinkedList = require('../LinkedList');
+var identity = require('@most/prelude').id;
 
 exports.mergeConcurrently = mergeConcurrently;
+exports.mergeMapConcurrently = mergeMapConcurrently;
 
 function mergeConcurrently(concurrency, stream) {
-	return new Stream(new MergeConcurrently(concurrency, stream.source));
+	return mergeMapConcurrently(identity, concurrency, stream);
 }
 
-function MergeConcurrently(concurrency, source) {
+function mergeMapConcurrently(f, concurrency, stream) {
+	return new Stream(new MergeConcurrently(f, concurrency, stream.source));
+}
+
+function MergeConcurrently(f, concurrency, source) {
+	this.f = f;
 	this.concurrency = concurrency;
 	this.source = source;
 }
 
 MergeConcurrently.prototype.run = function(sink, scheduler) {
-	return new Outer(this.concurrency, this.source, sink, scheduler);
+	return new Outer(this.f, this.concurrency, this.source, sink, scheduler);
 };
 
-function Outer(concurrency, source, sink, scheduler) {
+function Outer(f, concurrency, source, sink, scheduler) {
+	this.f = f;
 	this.concurrency = concurrency;
 	this.sink = sink;
 	this.scheduler = scheduler;
@@ -18379,8 +18222,12 @@ Outer.prototype._addInner = function(t, stream) {
 Outer.prototype._startInner = function(t, stream) {
 	var innerSink = new Inner(t, this, this.sink);
 	this.current.add(innerSink);
-	innerSink.disposable = stream.source.run(innerSink, this.scheduler);
+	innerSink.disposable = mapAndRun(this.f, innerSink, this.scheduler, stream);
 };
+
+function mapAndRun(f, innerSink, scheduler, stream) {
+	return f(stream).source.run(innerSink, scheduler);
+}
 
 Outer.prototype.end = function(t, x) {
 	this.active = false;
@@ -18440,13 +18287,12 @@ Inner.prototype.dispose = function() {
 	return this.disposable.dispose();
 };
 
-},{"../LinkedList":99,"../Stream":102,"../disposable/dispose":131}],118:[function(require,module,exports){
+},{"../LinkedList":99,"../Stream":102,"../disposable/dispose":130,"@most/prelude":3}],117:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
 
 var runSource = require('../runSource');
-var noop = require('../base').noop;
 
 exports.observe = observe;
 exports.drain = drain;
@@ -18472,7 +18318,9 @@ function drain(stream) {
 	return runSource.withDefaultScheduler(noop, stream.source);
 }
 
-},{"../base":103,"../runSource":138}],119:[function(require,module,exports){
+function noop() {}
+
+},{"../runSource":137}],118:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -18564,7 +18412,7 @@ AwaitSink.prototype._end = function(x) {
 	return Promise.resolve(x).then(this._endBound);
 };
 
-},{"../Stream":102,"../fatalError":132,"../source/core":151}],120:[function(require,module,exports){
+},{"../Stream":102,"../fatalError":131,"../source/core":151}],119:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -18572,7 +18420,7 @@ AwaitSink.prototype._end = function(x) {
 var Stream = require('../Stream');
 var Pipe = require('../sink/Pipe');
 var dispose = require('../disposable/dispose');
-var base = require('../base');
+var base = require('@most/prelude');
 var invoke = require('../invoke');
 
 exports.sample = sample;
@@ -18599,7 +18447,7 @@ function sample(f, sampler /*, ...streams */) {
  * @returns {Stream} sampled stream of values
  */
 function sampleWith(sampler, stream) {
-	return new Stream(new Sampler(base.identity, sampler.source, [stream.source]));
+	return new Stream(new Sampler(base.id, sampler.source, [stream.source]));
 }
 
 function sampleArray(f, sampler, streams) {
@@ -18644,7 +18492,7 @@ Hold.prototype.event = function(t, x) {
 	this.sink._notify(this);
 };
 
-Hold.prototype.end = base.noop;
+Hold.prototype.end = function () {};
 Hold.prototype.error = Pipe.prototype.error;
 
 function SampleSink(f, sinks, sink) {
@@ -18677,7 +18525,7 @@ function getValue(hold) {
 	return hold.value;
 }
 
-},{"../Stream":102,"../base":103,"../disposable/dispose":131,"../invoke":136,"../sink/Pipe":147}],121:[function(require,module,exports){
+},{"../Stream":102,"../disposable/dispose":130,"../invoke":135,"../sink/Pipe":146,"@most/prelude":3}],120:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -18686,6 +18534,7 @@ var Stream = require('../Stream');
 var Sink = require('../sink/Pipe');
 var core = require('../source/core');
 var dispose = require('../disposable/dispose');
+var Map = require('../fusion/Map');
 
 exports.take = take;
 exports.skip = skip;
@@ -18720,23 +18569,39 @@ function skip(n, stream) {
  */
 function slice(start, end, stream) {
 	return end <= start ? core.empty()
-		: new Stream(new Slice(start, end, stream.source));
+		: new Stream(sliceSource(start, end, stream.source));
+}
+
+function sliceSource(start, end, source) {
+	return source instanceof Map ? commuteMapSlice(start, end, source)
+		: source instanceof Slice ? fuseSlice(start, end, source)
+		: new Slice(start, end, source);
+}
+
+function commuteMapSlice(start, end, source) {
+	return Map.create(source.f, sliceSource(start, end, source.source))
+}
+
+function fuseSlice(start, end, source) {
+	start += source.min;
+	end = Math.min(end + source.min, source.max);
+	return new Slice(start, end, source.source);
 }
 
 function Slice(min, max, source) {
-	this.skip = min;
-	this.take = max - min;
 	this.source = source;
+	this.min = min;
+	this.max = max;
 }
 
 Slice.prototype.run = function(sink, scheduler) {
-	return new SliceSink(this.skip, this.take, this.source, sink, scheduler);
+	return new SliceSink(this.min, this.max - this.min, this.source, sink, scheduler);
 };
 
 function SliceSink(skip, take, source, sink, scheduler) {
+	this.sink = sink;
 	this.skip = skip;
 	this.take = take;
-	this.sink = sink;
 	this.disposable = dispose.once(source.run(this, scheduler));
 }
 
@@ -18841,16 +18706,13 @@ SkipWhileSink.prototype.event = function(t, x) {
 	this.sink.event(t, x);
 };
 
-},{"../Stream":102,"../disposable/dispose":131,"../sink/Pipe":147,"../source/core":151}],122:[function(require,module,exports){
+},{"../Stream":102,"../disposable/dispose":130,"../fusion/Map":134,"../sink/Pipe":146,"../source/core":151}],121:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
 
 var Stream = require('../Stream');
-var MulticastSource = require('@most/multicast').MulticastSource;
-var until = require('./timeslice').takeUntil;
-var mergeConcurrently = require('./mergeConcurrently').mergeConcurrently;
-var map = require('./transform').map;
+var dispose = require('../disposable/dispose')
 
 exports.switch = switchLatest;
 
@@ -18861,16 +18723,102 @@ exports.switch = switchLatest;
  * @returns {Stream} switching stream
  */
 function switchLatest(stream) {
-	var upstream = new Stream(new MulticastSource(stream.source));
-
-	return mergeConcurrently(1, map(untilNext, upstream));
-
-	function untilNext(s) {
-		return until(upstream, s);
-	}
+	return new Stream(new Switch(stream.source));
 }
 
-},{"../Stream":102,"./mergeConcurrently":117,"./timeslice":123,"./transform":126,"@most/multicast":2}],123:[function(require,module,exports){
+function Switch(source) {
+	this.source = source;
+}
+
+Switch.prototype.run = function(sink, scheduler) {
+	var switchSink = new SwitchSink(sink, scheduler);
+	return dispose.all(switchSink, this.source.run(switchSink, scheduler));
+};
+
+function SwitchSink(sink, scheduler) {
+	this.sink = sink;
+	this.scheduler = scheduler;
+	this.current = null;
+	this.ended = false;
+}
+
+SwitchSink.prototype.event = function(t, stream) {
+	this._disposeCurrent(t); // TODO: capture the result of this dispose
+	this.current = new Segment(t, Infinity, this, this.sink);
+	this.current.disposable = stream.source.run(this.current, this.scheduler);
+};
+
+SwitchSink.prototype.end = function(t, x) {
+	this.ended = true;
+	this._checkEnd(t, x);
+};
+
+SwitchSink.prototype.error = function(t, e) {
+	this.ended = true;
+	this.sink.error(t, e);
+};
+
+SwitchSink.prototype.dispose = function() {
+	return this._disposeCurrent(0);
+};
+
+SwitchSink.prototype._disposeCurrent = function(t) {
+	if(this.current !== null) {
+		return this.current._dispose(t);
+	}
+};
+
+SwitchSink.prototype._disposeInner = function(t, inner) {
+	inner._dispose(t); // TODO: capture the result of this dispose
+	if(inner === this.current) {
+		this.current = null;
+	}
+};
+
+SwitchSink.prototype._checkEnd = function(t, x) {
+	if(this.ended && this.current === null) {
+		this.sink.end(t, x);
+	}
+};
+
+SwitchSink.prototype._endInner = function(t, x, inner) {
+	this._disposeInner(t, inner);
+	this._checkEnd(t, x);
+};
+
+SwitchSink.prototype._errorInner = function(t, e, inner) {
+	this._disposeInner(t, inner);
+	this.sink.error(t, e);
+};
+
+function Segment(min, max, outer, sink) {
+	this.min = min;
+	this.max = max;
+	this.outer = outer;
+	this.sink = sink;
+	this.disposable = dispose.empty();
+}
+
+Segment.prototype.event = function(t, x) {
+	if(t < this.max) {
+		this.sink.event(Math.max(t, this.min), x);
+	}
+};
+
+Segment.prototype.end = function(t, x) {
+	this.outer._endInner(Math.max(t, this.min), x, this);
+};
+
+Segment.prototype.error = function(t, e) {
+	this.outer._errorInner(Math.max(t, this.min), e, this);
+};
+
+Segment.prototype._dispose = function(t) {
+	this.max = t;
+	dispose.tryDispose(t, this.disposable, this.sink)
+};
+
+},{"../Stream":102,"../disposable/dispose":130}],122:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -18879,7 +18827,6 @@ var Stream = require('../Stream');
 var Pipe = require('../sink/Pipe');
 var dispose = require('../disposable/dispose');
 var join = require('../combinator/flatMap').join;
-var noop = require('../base').noop;
 
 exports.during    = during;
 exports.takeUntil = takeUntil;
@@ -18987,7 +18934,9 @@ UpperBound.prototype.dispose = function() {
 	return this.disposable.dispose();
 };
 
-},{"../Stream":102,"../base":103,"../combinator/flatMap":113,"../disposable/dispose":131,"../sink/Pipe":147}],124:[function(require,module,exports){
+function noop() {}
+
+},{"../Stream":102,"../combinator/flatMap":112,"../disposable/dispose":130,"../sink/Pipe":146}],123:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19020,7 +18969,7 @@ TimestampSink.prototype.event = function(t, x) {
 	this.sink.event(t, { time: t, value: x });
 };
 
-},{"../Stream":102,"../sink/Pipe":147}],125:[function(require,module,exports){
+},{"../Stream":102,"../sink/Pipe":146}],124:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19145,7 +19094,7 @@ LegacyTxAdapter.prototype.getResult = function(x) {
 	return x.value;
 };
 
-},{"../Stream":102}],126:[function(require,module,exports){
+},{"../Stream":102}],125:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19193,7 +19142,7 @@ function tap(f, stream) {
 	}, stream);
 }
 
-},{"../Stream":102,"../fusion/Map":135}],127:[function(require,module,exports){
+},{"../Stream":102,"../fusion/Map":134}],126:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19204,7 +19153,7 @@ var core = require('../source/core');
 var Sink = require('../sink/Pipe');
 var IndexSink = require('../sink/IndexSink');
 var dispose = require('../disposable/dispose');
-var base = require('../base');
+var base = require('@most/prelude');
 var invoke = require('../invoke');
 var Queue = require('../Queue');
 
@@ -19328,7 +19277,7 @@ function ready(buffers) {
 	return true;
 }
 
-},{"../Queue":101,"../Stream":102,"../base":103,"../disposable/dispose":131,"../invoke":136,"../sink/IndexSink":145,"../sink/Pipe":147,"../source/core":151,"./transform":126}],128:[function(require,module,exports){
+},{"../Queue":101,"../Stream":102,"../disposable/dispose":130,"../invoke":135,"../sink/IndexSink":144,"../sink/Pipe":146,"../source/core":151,"./transform":125,"@most/prelude":3}],127:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19347,7 +19296,7 @@ function runTask(task) {
 	}
 }
 
-},{}],129:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19369,7 +19318,7 @@ Disposable.prototype.dispose = function() {
 	return this._dispose(this._data);
 };
 
-},{}],130:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19413,7 +19362,7 @@ SettableDisposable.prototype.dispose = function() {
 	return this.result;
 };
 
-},{}],131:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19421,10 +19370,10 @@ SettableDisposable.prototype.dispose = function() {
 var Disposable = require('./Disposable');
 var SettableDisposable = require('./SettableDisposable');
 var isPromise = require('../Promise').isPromise;
-var base = require('../base');
+var base = require('@most/prelude');
 
 var map = base.map;
-var identity = base.identity;
+var identity = base.id;
 
 exports.tryDispose = tryDispose;
 exports.create = create;
@@ -19542,7 +19491,7 @@ function memoized(disposable) {
 	return { disposed: false, disposable: disposable, value: void 0 };
 }
 
-},{"../Promise":100,"../base":103,"./Disposable":129,"./SettableDisposable":130}],132:[function(require,module,exports){
+},{"../Promise":100,"./Disposable":128,"./SettableDisposable":129,"@most/prelude":3}],131:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19555,7 +19504,7 @@ function fatalError (e) {
 	}, 0);
 }
 
-},{}],133:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19606,7 +19555,7 @@ function and(p, q) {
 	};
 }
 
-},{"../sink/Pipe":147}],134:[function(require,module,exports){
+},{"../sink/Pipe":146}],133:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19640,7 +19589,7 @@ FilterMapSink.prototype.event = function(t, x) {
 FilterMapSink.prototype.end = Pipe.prototype.end;
 FilterMapSink.prototype.error = Pipe.prototype.error;
 
-},{"../sink/Pipe":147}],135:[function(require,module,exports){
+},{"../sink/Pipe":146}],134:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19648,7 +19597,7 @@ FilterMapSink.prototype.error = Pipe.prototype.error;
 var Pipe = require('../sink/Pipe');
 var Filter = require('./Filter');
 var FilterMap = require('./FilterMap');
-var base = require('../base');
+var base = require('@most/prelude');
 
 module.exports = Map;
 
@@ -19697,7 +19646,7 @@ MapSink.prototype.event = function(t, x) {
 	this.sink.event(t, f(x));
 };
 
-},{"../base":103,"../sink/Pipe":147,"./Filter":133,"./FilterMap":134}],136:[function(require,module,exports){
+},{"../sink/Pipe":146,"./Filter":132,"./FilterMap":133,"@most/prelude":3}],135:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19718,7 +19667,7 @@ function invoke(f, args) {
 	}
 }
 
-},{}],137:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19751,7 +19700,7 @@ function makeIterable(f, o) {
 	return o;
 }
 
-},{}],138:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19780,7 +19729,7 @@ function runSource(f, source, scheduler, resolve, reject) {
 	disposable.setDisposable(source.run(observer, scheduler));
 }
 
-},{"./disposable/dispose":131,"./scheduler/defaultScheduler":141,"./sink/Observer":146}],139:[function(require,module,exports){
+},{"./disposable/dispose":130,"./scheduler/defaultScheduler":140,"./sink/Observer":145}],138:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -19838,12 +19787,12 @@ function end(t, x, sink) {
 	sink.end(t, x);
 }
 
-},{"../fatalError":132}],140:[function(require,module,exports){
+},{"../fatalError":131}],139:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
 
-var base = require('./../base');
+var base = require('@most/prelude');
 
 module.exports = Scheduler;
 
@@ -20062,7 +20011,7 @@ function newTimeslot(t, events) {
 	return { time: t, events: events };
 }
 
-},{"./../base":103}],141:[function(require,module,exports){
+},{"@most/prelude":3}],140:[function(require,module,exports){
 (function (process){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
@@ -20078,7 +20027,7 @@ var isNode = typeof process === 'object'
 module.exports = new Scheduler(isNode ? nodeTimer : setTimeoutTimer);
 
 }).call(this,require('_process'))
-},{"./Scheduler":140,"./nodeTimer":142,"./timeoutTimer":143,"_process":169}],142:[function(require,module,exports){
+},{"./Scheduler":139,"./nodeTimer":141,"./timeoutTimer":142,"_process":169}],141:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -20124,7 +20073,7 @@ module.exports = {
 	}
 };
 
-},{"../defer":128}],143:[function(require,module,exports){
+},{"../defer":127}],142:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -20141,7 +20090,7 @@ module.exports = {
 	}
 };
 
-},{}],144:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -20230,7 +20179,7 @@ ErrorTask.prototype.error = function(e) {
 	throw e;
 };
 
-},{"../defer":128}],145:[function(require,module,exports){
+},{"../defer":127}],144:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -20272,7 +20221,7 @@ IndexSink.prototype.end = function(t, x) {
 
 IndexSink.prototype.error = Sink.prototype.error;
 
-},{"./Pipe":147}],146:[function(require,module,exports){
+},{"./Pipe":146}],145:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -20318,7 +20267,7 @@ function disposeThen(end, error, disposable, x) {
 	}, error);
 }
 
-},{}],147:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -20346,6 +20295,43 @@ Pipe.prototype.end = function(t, x) {
 Pipe.prototype.error = function(t, e) {
 	return this.sink.error(t, e);
 };
+
+},{}],147:[function(require,module,exports){
+/** @license MIT License (c) copyright 2010-2016 original author or authors */
+/** @author Brian Cavalier */
+/** @author John Hann */
+
+module.exports = SafeSink;
+
+function SafeSink(sink) {
+	this.sink = sink;
+	this.active = true;
+}
+
+SafeSink.prototype.event = function(t, x) {
+	if(!this.active) {
+		return;
+	}
+	this.sink.event(t, x);
+};
+
+SafeSink.prototype.end = function(t, x) {
+	if(!this.active) {
+		return;
+	}
+	this.disable();
+	this.sink.end(t, x);
+};
+
+SafeSink.prototype.error = function(t, e) {
+	this.disable();
+	this.sink.error(t, e);
+};
+
+SafeSink.prototype.disable = function() {
+	this.active = false;
+	return this.sink;
+}
 
 },{}],148:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
@@ -20394,7 +20380,7 @@ function disposeEventEmitter(info) {
 	target.source.removeListener(target.event, info.addEvent);
 }
 
-},{"../disposable/dispose":131,"../sink/DeferredSink":144,"./tryEvent":160}],149:[function(require,module,exports){
+},{"../disposable/dispose":130,"../sink/DeferredSink":143,"./tryEvent":160}],149:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -20426,7 +20412,7 @@ function disposeEventTarget(info) {
 	target.source.removeEventListener(target.event, info.addEvent, target.capture);
 }
 
-},{"../disposable/dispose":131,"./tryEvent":160}],150:[function(require,module,exports){
+},{"../disposable/dispose":130,"./tryEvent":160}],150:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -20452,7 +20438,7 @@ ValueProducer.prototype.dispose = function() {
 	return this.task.cancel();
 };
 
-},{"../scheduler/PropagateTask":139}],151:[function(require,module,exports){
+},{"../scheduler/PropagateTask":138}],151:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -20519,7 +20505,7 @@ NeverSource.prototype.run = function() {
 
 var NEVER = new Stream(new NeverSource());
 
-},{"../Stream":102,"../disposable/dispose":131,"../scheduler/PropagateTask":139,"../source/ValueSource":150}],152:[function(require,module,exports){
+},{"../Stream":102,"../disposable/dispose":130,"../scheduler/PropagateTask":138,"../source/ValueSource":150}],152:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -20597,7 +20583,7 @@ Subscription.prototype.dispose = function() {
 	}
 };
 
-},{"../Stream":102,"../sink/DeferredSink":144,"./tryEvent":160,"@most/multicast":2}],153:[function(require,module,exports){
+},{"../Stream":102,"../sink/DeferredSink":143,"./tryEvent":160,"@most/multicast":2}],153:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -20605,7 +20591,7 @@ Subscription.prototype.dispose = function() {
 var fromArray = require('./fromArray').fromArray;
 var isIterable = require('../iterable').isIterable;
 var fromIterable = require('./fromIterable').fromIterable;
-var isArrayLike = require('../base').isArrayLike;
+var isArrayLike = require('@most/prelude').isArrayLike;
 
 exports.from = from;
 
@@ -20621,7 +20607,7 @@ function from(a) {
 	throw new TypeError('not iterable: ' + a);
 }
 
-},{"../base":103,"../iterable":137,"./fromArray":154,"./fromIterable":156}],154:[function(require,module,exports){
+},{"../iterable":136,"./fromArray":154,"./fromIterable":156,"@most/prelude":3}],154:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -20669,7 +20655,7 @@ function produce(task, array, sink) {
 	}
 }
 
-},{"../Stream":102,"../scheduler/PropagateTask":139}],155:[function(require,module,exports){
+},{"../Stream":102,"../scheduler/PropagateTask":138}],155:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -20750,13 +20736,13 @@ function runProducer(t, producer, sink) {
 	producer.scheduler.asap(producer.task);
 }
 
-},{"../Stream":102,"../iterable":137,"../scheduler/PropagateTask":139}],157:[function(require,module,exports){
+},{"../Stream":102,"../iterable":136,"../scheduler/PropagateTask":138}],157:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
 
 var Stream = require('../Stream');
-var base = require('../base');
+var base = require('@most/prelude');
 
 exports.generate = generate;
 
@@ -20822,7 +20808,7 @@ Generate.prototype.dispose = function() {
 	this.active = false;
 };
 
-},{"../Stream":102,"../base":103}],158:[function(require,module,exports){
+},{"../Stream":102,"@most/prelude":3}],158:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -20932,7 +20918,7 @@ function emit(t, x, sink) {
 	sink.event(t, x);
 }
 
-},{"../Stream":102,"../disposable/dispose":131,"../scheduler/PropagateTask":139,"@most/multicast":2}],160:[function(require,module,exports){
+},{"../Stream":102,"../disposable/dispose":130,"../scheduler/PropagateTask":138,"@most/multicast":2}],160:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -21037,7 +21023,7 @@ function continueUnfold(unfold, tuple) {
 /** @author John Hann */
 
 var Stream = require('./lib/Stream');
-var base = require('./lib/base');
+var base = require('@most/prelude');
 var core = require('./lib/source/core');
 var from = require('./lib/source/from').from;
 var periodic = require('./lib/source/periodic').periodic;
@@ -21713,7 +21699,7 @@ Stream.prototype.multicast = function() {
 	return multicast(this);
 };
 
-},{"./lib/Stream":102,"./lib/base":103,"./lib/combinator/accumulate":104,"./lib/combinator/applicative":105,"./lib/combinator/build":106,"./lib/combinator/combine":107,"./lib/combinator/concatMap":108,"./lib/combinator/continueWith":109,"./lib/combinator/delay":110,"./lib/combinator/errors":111,"./lib/combinator/filter":112,"./lib/combinator/flatMap":113,"./lib/combinator/limit":114,"./lib/combinator/loop":115,"./lib/combinator/merge":116,"./lib/combinator/mergeConcurrently":117,"./lib/combinator/observe":118,"./lib/combinator/promises":119,"./lib/combinator/sample":120,"./lib/combinator/slice":121,"./lib/combinator/switch":122,"./lib/combinator/timeslice":123,"./lib/combinator/timestamp":124,"./lib/combinator/transduce":125,"./lib/combinator/transform":126,"./lib/combinator/zip":127,"./lib/source/core":151,"./lib/source/create":152,"./lib/source/from":153,"./lib/source/fromEvent":155,"./lib/source/generate":157,"./lib/source/iterate":158,"./lib/source/periodic":159,"./lib/source/unfold":161,"@most/multicast":2}],163:[function(require,module,exports){
+},{"./lib/Stream":102,"./lib/combinator/accumulate":103,"./lib/combinator/applicative":104,"./lib/combinator/build":105,"./lib/combinator/combine":106,"./lib/combinator/concatMap":107,"./lib/combinator/continueWith":108,"./lib/combinator/delay":109,"./lib/combinator/errors":110,"./lib/combinator/filter":111,"./lib/combinator/flatMap":112,"./lib/combinator/limit":113,"./lib/combinator/loop":114,"./lib/combinator/merge":115,"./lib/combinator/mergeConcurrently":116,"./lib/combinator/observe":117,"./lib/combinator/promises":118,"./lib/combinator/sample":119,"./lib/combinator/slice":120,"./lib/combinator/switch":121,"./lib/combinator/timeslice":122,"./lib/combinator/timestamp":123,"./lib/combinator/transduce":124,"./lib/combinator/transform":125,"./lib/combinator/zip":126,"./lib/source/core":151,"./lib/source/create":152,"./lib/source/from":153,"./lib/source/fromEvent":155,"./lib/source/generate":157,"./lib/source/iterate":158,"./lib/source/periodic":159,"./lib/source/unfold":161,"@most/multicast":2,"@most/prelude":3}],163:[function(require,module,exports){
 module.exports={"2.16.840.1.101.3.4.1.1": "aes-128-ecb",
 "2.16.840.1.101.3.4.1.2": "aes-128-cbc",
 "2.16.840.1.101.3.4.1.3": "aes-128-ofb",
@@ -26400,10 +26386,12 @@ var removeTodoAction = exports.removeTodoAction = seq(toDataId, _todos.removeTod
 // export const updateTodoAction = seq(toIdAndComplete, updateComplete, setTodos)
 var updateTodoAction = exports.updateTodoAction = seq(toIdAndComplete, _todos.updateComplete);
 
-var updateAllAction = exports.updateAllAction = seq(toChecked, _todos.updateAllComplete, setTodos);
+// export const updateAllAction = seq(toChecked, updateAllComplete, setTodos)
+var updateAllAction = exports.updateAllAction = seq(toChecked, _todos.updateAllComplete);
 
+// export const clearCompleteAction = () => setTodos(removeComplete)
 var clearCompleteAction = exports.clearCompleteAction = function clearCompleteAction() {
-  return setTodos(_todos.removeComplete);
+  return _todos.removeComplete;
 };
 
 var updateView = function updateView(view) {
@@ -26431,7 +26419,7 @@ var editTodo = function editTodo(f) {
     var todos = _ref7.todos;
     var editing = _ref7.editing;
     var view = _ref7.view;
-    return { todos: f(todos), editing: 0, view: view };
+    return { todos: f(todos), editing: '', view: view };
   };
 };
 
@@ -26508,19 +26496,18 @@ var ENTER_KEY = 13;
 var ESC_KEY = 27;
 
 var listActions = function listActions(el) {
+  var clicks = (0, _domEvent.click)(el);
+  var changes = (0, _domEvent.change)(el);
+
   var add = (0, _most.map)(_action.addTodoAction, preventDefault(match('.add-todo', (0, _domEvent.submit)(el))));
-  var remove = (0, _most.map)(_action.removeTodoAction, match('.destroy', (0, _domEvent.click)(el)));
-  var complete = (0, _most.map)(_action.updateTodoAction, match('.toggle', (0, _domEvent.change)(el)));
+  var remove = (0, _most.map)(_action.removeTodoAction, match('.destroy', clicks));
+  var complete = (0, _most.map)(_action.updateTodoAction, match('.toggle', changes));
+  var all = (0, _most.map)(_action.updateAllAction, match('.toggle-all', changes));
+  var clear = (0, _most.map)(_action.clearCompleteAction, match('.clear-completed', clicks));
 
-  return (0, _most.merge)(add, remove, complete);
-
-  //
-  // const all = map(updateAllAction, match('.toggle-all', change(el)))
-  //
-  // const clear = map(clearCompleteAction, match('.clear-completed', click(el)))
-  //
-  // return merge(add, remove, complete, all, clear)
+  return (0, _most.merge)(add, remove, complete, all, clear);
 };
+
 //
 // const editActions = el => {
 //   const beginEdit = map(beginEditAction, match('label', dblclick(el)))

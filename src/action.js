@@ -40,9 +40,11 @@ export const removeTodoAction = seq(toDataId, removeTodo)
 // export const updateTodoAction = seq(toIdAndComplete, updateComplete, setTodos)
 export const updateTodoAction = seq(toIdAndComplete, updateComplete)
 
-export const updateAllAction = seq(toChecked, updateAllComplete, setTodos)
+// export const updateAllAction = seq(toChecked, updateAllComplete, setTodos)
+export const updateAllAction = seq(toChecked, updateAllComplete)
 
-export const clearCompleteAction = () => setTodos(removeComplete)
+// export const clearCompleteAction = () => setTodos(removeComplete)
+export const clearCompleteAction = () => removeComplete
 
 const updateView = view => ({ todos, editing }) => ({ todos, editing, view })
 export const updateViewAction = seq(e => e.newURL, viewFromHash, updateView)
@@ -51,7 +53,7 @@ const beginEdit = editing => ({ todos, view }) => ({ todos, editing, view })
 export const beginEditAction = seq(toDataId, beginEdit)
 
 const editTodo = f => ({ todos, editing, view }) =>
-  ({ todos: f(todos), editing: 0, view })
+  ({ todos: f(todos), editing: '', view })
 
 const abortEdit = () => id
 export const abortEditAction = seq(toDataId, abortEdit, editTodo)

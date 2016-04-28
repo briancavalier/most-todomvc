@@ -7,7 +7,7 @@ import attrs from 'snabbdom/modules/attributes'
 import clss from 'snabbdom/modules/class'
 
 import { render } from './view'
-import { addTodoAction, removeTodoAction, updateTodoAction } from './action'
+import { addTodoAction, removeTodoAction, updateTodoAction, updateAllAction, clearCompleteAction } from './action'
 
 const applyActions = (initial, actions) => scan(applyAction, initial, actions)
 const applyAction = (state, action) => action(state)
@@ -22,19 +22,18 @@ const ENTER_KEY = 13
 const ESC_KEY = 27
 
 const listActions = el => {
+  const clicks = click(el)
+  const changes = change(el)
+
   const add = map(addTodoAction, preventDefault(match('.add-todo', submit(el))))
-  const remove = map(removeTodoAction, match('.destroy', click(el)))
-  const complete = map(updateTodoAction, match('.toggle', change(el)))
+  const remove = map(removeTodoAction, match('.destroy', clicks))
+  const complete = map(updateTodoAction, match('.toggle', changes))
+  const all = map(updateAllAction, match('.toggle-all', changes))
+  const clear = map(clearCompleteAction, match('.clear-completed', clicks))
 
-  return merge(add, remove, complete)
-
-	//
-  // const all = map(updateAllAction, match('.toggle-all', change(el)))
-	//
-  // const clear = map(clearCompleteAction, match('.clear-completed', click(el)))
-	//
-  // return merge(add, remove, complete, all, clear)
+  return merge(add, remove, complete, all, clear)
 }
+
 //
 // const editActions = el => {
 //   const beginEdit = map(beginEditAction, match('label', dblclick(el)))
@@ -65,9 +64,7 @@ const root = document.querySelector('.todoapp')
 const container = root.parentNode
 
 const patch = snabbdom.init([props, attrs, clss])
-const updateApp = (node, state) => {
-  console.log(node, state)
-  return patch(node, render({ todos: state, editing: '', view: 'all' }))
-}
+const updateApp = (node, state) =>
+  patch(node, render({ todos: state, editing: '', view: 'all' }))
 
 todos(window, container, []).scan(updateApp, root).drain()
