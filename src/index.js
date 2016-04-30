@@ -7,9 +7,10 @@ import attrs from 'snabbdom/modules/attributes'
 import clss from 'snabbdom/modules/class'
 
 import { render } from './view'
-import { addTodoAction, removeTodoAction, updateTodoAction, updateAllAction, clearCompleteAction } from './action'
+import {
+	addTodoAction, removeTodoAction, updateTodoAction, updateAllAction,
+	clearCompleteAction, updateViewAction } from './action'
 
-const applyActions = (initial, actions) => scan(applyAction, initial, actions)
 const applyAction = (state, action) => action(state)
 
 const preventDefault = s => tap(doPreventDefault, s)
@@ -48,23 +49,20 @@ const listActions = el => {
 //   return merge(beginEdit, saveEdit, abortEdit)
 // }
 //
-// const filterActions = window =>
-//   map(updateViewAction, hashchange(window))
+const filterActions = window =>
+  map(updateViewAction, hashchange(window))
 
 const todos = (window, container, initialState) => {
-  // const actions = merge(listActions(container),
-  //         editActions(container),
-  //         filterActions(window))
-
-  const actions = listActions(container)
-  return applyActions(initialState, actions)
+  const actions = merge(listActions(container), filterActions(window))
+  return scan(applyAction, initialState, actions)
 }
 
 const root = document.querySelector('.todoapp')
 const container = root.parentNode
 
 const patch = snabbdom.init([props, attrs, clss])
-const updateApp = (node, state) =>
-  patch(node, render({ todos: state, editing: '', view: 'all' }))
+const updateApp = (node, state) => patch(node, render(state))
 
-todos(window, container, []).scan(updateApp, root).drain()
+const initialState = { todos: [], editing: '', view: 'all' }
+
+todos(window, container, initialState).scan(updateApp, root).drain()

@@ -1,8 +1,23 @@
-/*
+.main.todos-0,
+.todos-0 .footer,
+.todos-0 .toggle-all,
+.complete-0 .clear-completed {
+	display: none;
+}
 
-app-template.css overrides
+.all [href="#/"],
+.active [href="#/active"],
+.complete [href="#/completed"] {
+	border-color: rgba(175, 47, 47, 0.2);
+}
 
-remove this comment if used
-remove this file if not
+.active .todo-list .completed {
+	display: none;
+}
 
-*/
+.complete .todo-list li {
+	display: none;
+}
+.complete .todo-list .completed {
+	display: block;
+}

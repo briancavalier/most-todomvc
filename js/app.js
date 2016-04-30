@@ -26346,10 +26346,6 @@ var toIdAndDescription = function toIdAndDescription(e) {
 
 // -------------------------------------------------------
 // App state
-var viewFromHash = function viewFromHash(hash) {
-  return hash.replace(/^.*#\/?/, '') || 'all';
-};
-
 var setTodos = function setTodos(f) {
   return function (_ref2) {
     var todos = _ref2.todos;
@@ -26357,6 +26353,10 @@ var setTodos = function setTodos(f) {
     var view = _ref2.view;
     return { todos: f(todos), editing: editing, view: view };
   };
+};
+
+var viewFromHash = function viewFromHash(hash) {
+  return hash.replace(/^.*#\/?/, '') || 'all';
 };
 
 var seq = function seq() {
@@ -26378,20 +26378,16 @@ var resetForm = function resetForm(_ref3) {
 var withFirstValue = function withFirstValue(e) {
   return [e.target.elements[0].value, e.target];
 };
-var addTodoAction = exports.addTodoAction = seq(withFirstValue, resetForm, _todos.addTodo);
+var addTodoAction = exports.addTodoAction = seq(withFirstValue, resetForm, _todos.addTodo, setTodos);
 
-// export const removeTodoAction = seq(toDataId, removeTodo, setTodos)
-var removeTodoAction = exports.removeTodoAction = seq(toDataId, _todos.removeTodo);
+var removeTodoAction = exports.removeTodoAction = seq(toDataId, _todos.removeTodo, setTodos);
 
-// export const updateTodoAction = seq(toIdAndComplete, updateComplete, setTodos)
-var updateTodoAction = exports.updateTodoAction = seq(toIdAndComplete, _todos.updateComplete);
+var updateTodoAction = exports.updateTodoAction = seq(toIdAndComplete, _todos.updateComplete, setTodos);
 
-// export const updateAllAction = seq(toChecked, updateAllComplete, setTodos)
-var updateAllAction = exports.updateAllAction = seq(toChecked, _todos.updateAllComplete);
+var updateAllAction = exports.updateAllAction = seq(toChecked, _todos.updateAllComplete, setTodos);
 
-// export const clearCompleteAction = () => setTodos(removeComplete)
 var clearCompleteAction = exports.clearCompleteAction = function clearCompleteAction() {
-  return _todos.removeComplete;
+  return setTodos(_todos.removeComplete);
 };
 
 var updateView = function updateView(view) {
@@ -26417,7 +26413,6 @@ var beginEditAction = exports.beginEditAction = seq(toDataId, beginEdit);
 var editTodo = function editTodo(f) {
   return function (_ref7) {
     var todos = _ref7.todos;
-    var editing = _ref7.editing;
     var view = _ref7.view;
     return { todos: f(todos), editing: '', view: view };
   };
@@ -26465,9 +26460,6 @@ var _action = require('./action');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var applyActions = function applyActions(initial, actions) {
-  return (0, _most.scan)(applyAction, initial, actions);
-};
 var applyAction = function applyAction(state, action) {
   return action(state);
 };
@@ -26522,16 +26514,13 @@ var listActions = function listActions(el) {
 //   return merge(beginEdit, saveEdit, abortEdit)
 // }
 //
-// const filterActions = window =>
-//   map(updateViewAction, hashchange(window))
+var filterActions = function filterActions(window) {
+  return (0, _most.map)(_action.updateViewAction, (0, _domEvent.hashchange)(window));
+};
 
 var todos = function todos(window, container, initialState) {
-  // const actions = merge(listActions(container),
-  //         editActions(container),
-  //         filterActions(window))
-
-  var actions = listActions(container);
-  return applyActions(initialState, actions);
+  var actions = (0, _most.merge)(listActions(container), filterActions(window));
+  return (0, _most.scan)(applyAction, initialState, actions);
 };
 
 var root = document.querySelector('.todoapp');
@@ -26539,11 +26528,12 @@ var container = root.parentNode;
 
 var patch = _snabbdom2.default.init([_props2.default, _attributes2.default, _class2.default]);
 var updateApp = function updateApp(node, state) {
-  console.log(node, state);
-  return patch(node, (0, _view.render)({ todos: state, editing: '', view: 'all' }));
+  return patch(node, (0, _view.render)(state));
 };
 
-todos(window, container, []).scan(updateApp, root).drain();
+var initialState = { todos: [], editing: '', view: 'all' };
+
+todos(window, container, initialState).scan(updateApp, root).drain();
 
 },{"./action":211,"./view":214,"@most/dom-event":1,"most":162,"snabbdom":203,"snabbdom/modules/attributes":200,"snabbdom/modules/class":201,"snabbdom/modules/props":202}],213:[function(require,module,exports){
 'use strict';

@@ -22,29 +22,25 @@ const toIdAndDescription = e =>
 
 // -------------------------------------------------------
 // App state
-const viewFromHash = hash => hash.replace(/^.*#\/?/, '') || 'all'
-
 const setTodos = f => ({ todos, editing, view }) =>
   ({ todos: f(todos), editing, view })
+
+const viewFromHash = hash => hash.replace(/^.*#\/?/, '') || 'all'
 
 const seq = (...fs) => fs.reduceRight(compose)
 
 const resetForm = ([value, form]) => (form.reset(), value)
 
 const withFirstValue = e => [e.target.elements[0].value, e.target]
-export const addTodoAction = seq(withFirstValue, resetForm, addTodo)
+export const addTodoAction = seq(withFirstValue, resetForm, addTodo, setTodos)
 
-// export const removeTodoAction = seq(toDataId, removeTodo, setTodos)
-export const removeTodoAction = seq(toDataId, removeTodo)
+export const removeTodoAction = seq(toDataId, removeTodo, setTodos)
 
-// export const updateTodoAction = seq(toIdAndComplete, updateComplete, setTodos)
-export const updateTodoAction = seq(toIdAndComplete, updateComplete)
+export const updateTodoAction = seq(toIdAndComplete, updateComplete, setTodos)
 
-// export const updateAllAction = seq(toChecked, updateAllComplete, setTodos)
-export const updateAllAction = seq(toChecked, updateAllComplete)
+export const updateAllAction = seq(toChecked, updateAllComplete, setTodos)
 
-// export const clearCompleteAction = () => setTodos(removeComplete)
-export const clearCompleteAction = () => removeComplete
+export const clearCompleteAction = () => setTodos(removeComplete)
 
 const updateView = view => ({ todos, editing }) => ({ todos, editing, view })
 export const updateViewAction = seq(e => e.newURL, viewFromHash, updateView)
@@ -52,7 +48,7 @@ export const updateViewAction = seq(e => e.newURL, viewFromHash, updateView)
 const beginEdit = editing => ({ todos, view }) => ({ todos, editing, view })
 export const beginEditAction = seq(toDataId, beginEdit)
 
-const editTodo = f => ({ todos, editing, view }) =>
+const editTodo = f => ({ todos, view }) =>
   ({ todos: f(todos), editing: '', view })
 
 const abortEdit = () => id
