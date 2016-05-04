@@ -26321,15 +26321,10 @@ var _todos = require('./todos');
 
 var toDataId = function toDataId(_ref) {
   var target = _ref.target;
-
-  while (target !== null) {
-    var _id = target.getAttribute('data-id');
-    if (_id) {
-      return _id;
-    }
-    target = target.parentNode;
-  }
-  return -1;
+  return findDataId(target);
+};
+var findDataId = function findDataId(node) {
+  return node == null ? '' : node.getAttribute('data-id') || findDataId(node.parentNode);
 };
 
 var toChecked = function toChecked(e) {
@@ -26419,11 +26414,8 @@ var editTodo = function editTodo(f) {
 };
 
 var abortEdit = function abortEdit() {
-  return function (todos) {
-    return todos.slice();
-  };
+  return _prelude.id;
 };
-
 var abortEditAction = exports.abortEditAction = seq(toDataId, abortEdit, editTodo);
 
 var endEdit = function endEdit(_ref8) {

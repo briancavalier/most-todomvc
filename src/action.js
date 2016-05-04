@@ -1,16 +1,9 @@
 import { compose, id } from '@most/prelude'
 import { addTodo, removeTodo, updateComplete, updateAllComplete, removeComplete, updateDescription } from './todos'
 
-const toDataId = ({ target }) => {
-  while (target !== null) {
-    const id = target.getAttribute('data-id')
-    if (id) {
-      return id
-    }
-    target = target.parentNode
-  }
-  return -1
-}
+const toDataId = ({ target }) => findDataId(target)
+const findDataId = node => node == null ? ''
+  : node.getAttribute('data-id') || findDataId(node.parentNode)
 
 const toChecked = e => e.target.checked
 
@@ -52,7 +45,6 @@ const editTodo = f => ({ todos, view }) =>
   ({ todos: f(todos), editing: '', view })
 
 const abortEdit = () => id
-
 export const abortEditAction = seq(toDataId, abortEdit, editTodo)
 
 const endEdit = ({ id, description }) =>
