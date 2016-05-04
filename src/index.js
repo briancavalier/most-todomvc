@@ -8,15 +8,17 @@ import clss from 'snabbdom/modules/class'
 
 import { render } from './view'
 import {
-	addTodoAction, removeTodoAction, updateTodoAction, updateAllAction,
-	clearCompleteAction, updateViewAction } from './action'
+  addTodoAction, removeTodoAction, updateTodoAction, updateAllAction,
+  clearCompleteAction, updateViewAction,
+	beginEditAction, endEditAction, abortEditAction
+} from './action'
 
 const applyAction = (state, action) => action(state)
 
 const preventDefault = s => tap(doPreventDefault, s)
 const doPreventDefault = e => e.preventDefault()
 
-const isKey = code => s => filter(e => e.keyCode === code, s)
+const isKey = (code, s) => filter(e => e.keyCode === code, s)
 const match = (query, s) => filter(e => e.target.matches(query), s)
 
 const ENTER_KEY = 13
@@ -35,25 +37,25 @@ const listActions = el => {
   return merge(add, remove, complete, all, clear)
 }
 
-//
-// const editActions = el => {
-//   const beginEdit = map(beginEditAction, match('label', dblclick(el)))
-//
-//   const editKey = match('.edit', keyup(el))
-//   const blurEdit = match('.edit', focusout(el))
-//   const enter = isKey(ENTER_KEY, editKey)
-//   const saveEdit = map(endEditAction, merge(enter, blurEdit))
-//
-//   const abortEdit = map(abortEditAction, isKey(ESC_KEY, editKey))
-//
-//   return merge(beginEdit, saveEdit, abortEdit)
-// }
-//
+const editActions = el => {
+  const beginEdit = map(beginEditAction, match('label', dblclick(el)))
+
+  const editKey = match('.edit', keyup(el))
+  const enter = isKey(ENTER_KEY, editKey)
+  const blurEdit = match('.edit', focusout(el))
+  const saveEdit = map(endEditAction, merge(enter, blurEdit))
+
+  const escape = isKey(ESC_KEY, editKey)
+  const abortEdit = map(abortEditAction, escape)
+
+  return merge(beginEdit, saveEdit, abortEdit)
+}
+
 const filterActions = window =>
   map(updateViewAction, hashchange(window))
 
 const todos = (window, container, initialState) => {
-  const actions = merge(listActions(container), filterActions(window))
+  const actions = merge(listActions(container), editActions(container), filterActions(window))
   return scan(applyAction, initialState, actions)
 }
 

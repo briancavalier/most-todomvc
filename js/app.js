@@ -26419,8 +26419,11 @@ var editTodo = function editTodo(f) {
 };
 
 var abortEdit = function abortEdit() {
-  return _prelude.id;
+  return function (todos) {
+    return todos.slice();
+  };
 };
+
 var abortEditAction = exports.abortEditAction = seq(toDataId, abortEdit, editTodo);
 
 var endEdit = function endEdit(_ref8) {
@@ -26471,12 +26474,10 @@ var doPreventDefault = function doPreventDefault(e) {
   return e.preventDefault();
 };
 
-var isKey = function isKey(code) {
-  return function (s) {
-    return (0, _most.filter)(function (e) {
-      return e.keyCode === code;
-    }, s);
-  };
+var isKey = function isKey(code, s) {
+  return (0, _most.filter)(function (e) {
+    return e.keyCode === code;
+  }, s);
 };
 var match = function match(query, s) {
   return (0, _most.filter)(function (e) {
@@ -26500,26 +26501,26 @@ var listActions = function listActions(el) {
   return (0, _most.merge)(add, remove, complete, all, clear);
 };
 
-//
-// const editActions = el => {
-//   const beginEdit = map(beginEditAction, match('label', dblclick(el)))
-//
-//   const editKey = match('.edit', keyup(el))
-//   const blurEdit = match('.edit', focusout(el))
-//   const enter = isKey(ENTER_KEY, editKey)
-//   const saveEdit = map(endEditAction, merge(enter, blurEdit))
-//
-//   const abortEdit = map(abortEditAction, isKey(ESC_KEY, editKey))
-//
-//   return merge(beginEdit, saveEdit, abortEdit)
-// }
-//
+var editActions = function editActions(el) {
+  var beginEdit = (0, _most.map)(_action.beginEditAction, match('label', (0, _domEvent.dblclick)(el)));
+
+  var editKey = match('.edit', (0, _domEvent.keyup)(el));
+  var enter = isKey(ENTER_KEY, editKey);
+  var blurEdit = match('.edit', (0, _domEvent.focusout)(el));
+  var saveEdit = (0, _most.map)(_action.endEditAction, (0, _most.merge)(enter, blurEdit));
+
+  var escape = isKey(ESC_KEY, editKey);
+  var abortEdit = (0, _most.map)(_action.abortEditAction, escape);
+
+  return (0, _most.merge)(beginEdit, saveEdit, abortEdit);
+};
+
 var filterActions = function filterActions(window) {
   return (0, _most.map)(_action.updateViewAction, (0, _domEvent.hashchange)(window));
 };
 
 var todos = function todos(window, container, initialState) {
-  var actions = (0, _most.merge)(listActions(container), filterActions(window));
+  var actions = (0, _most.merge)(listActions(container), editActions(container), filterActions(window));
   return (0, _most.scan)(applyAction, initialState, actions);
 };
 

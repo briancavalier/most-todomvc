@@ -52,6 +52,7 @@ const editTodo = f => ({ todos, view }) =>
   ({ todos: f(todos), editing: '', view })
 
 const abortEdit = () => id
+
 export const abortEditAction = seq(toDataId, abortEdit, editTodo)
 
 const endEdit = ({ id, description }) =>
