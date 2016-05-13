@@ -1,9 +1,7 @@
 import { replace, remove } from '@most/prelude'
-import uuid from 'uuid4'
+import newId from 'uuid4'
 
 // type Id = Uuid
-const newId = uuid
-
 // data Todo = { id::Id, description::string, complete::boolean }
 
 // emptyTodos :: [Todo]

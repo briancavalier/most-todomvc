@@ -67,4 +67,4 @@ const updateApp = (node, state) => patch(node, render(state))
 
 const initialState = { todos: [], editing: '', view: 'all' }
 
-todos(window, container, initialState).scan(updateApp, root).drain()
+todos(window, container, initialState).reduce(updateApp, root)
