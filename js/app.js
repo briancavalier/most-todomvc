@@ -26558,17 +26558,22 @@ var listActions = function listActions(el) {
 };
 
 var editActions = function editActions(el) {
-  var beginEdit = (0, _most.map)(_action.beginEditAction, match('label', (0, _domEvent.dblclick)(el)));
+  return (0, _most.map)(editTodo(el), match('label', (0, _domEvent.dblclick)(el))).switch();
+};
 
-  var editKey = match('.edit', (0, _domEvent.keyup)(el));
-  var enter = isKey(ENTER_KEY, editKey);
-  var blurEdit = match('.edit', (0, _domEvent.focusout)(el));
-  var saveEdit = (0, _most.map)(_action.endEditAction, (0, _most.merge)(enter, blurEdit));
+var editTodo = function editTodo(el) {
+  return function (e) {
+    var editKey = match('.edit', (0, _domEvent.keyup)(el));
+    var enter = isKey(ENTER_KEY, editKey);
+    var blurEdit = match('.edit', (0, _domEvent.focusout)(el));
+    var saveEdit = (0, _most.map)(_action.endEditAction, (0, _most.merge)(enter, blurEdit));
 
-  var escape = isKey(ESC_KEY, editKey);
-  var abortEdit = (0, _most.map)(_action.abortEditAction, escape);
+    var escape = isKey(ESC_KEY, editKey);
+    var abortEdit = (0, _most.map)(_action.abortEditAction, escape);
 
-  return (0, _most.merge)(beginEdit, saveEdit, abortEdit);
+    var endEdit = (0, _most.take)(1, (0, _most.merge)(saveEdit, abortEdit));
+    return (0, _most.startWith)((0, _action.beginEditAction)(e), endEdit);
+  };
 };
 
 var filterActions = function filterActions(window) {

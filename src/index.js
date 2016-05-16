@@ -1,4 +1,4 @@
-import { merge, map, tap, filter, scan } from 'most'
+import { merge, map, tap, filter, scan, startWith, take } from 'most'
 import { submit, change, click, dblclick, keyup, focusout, hashchange } from '@most/dom-event'
 
 import snabbdom from 'snabbdom'
@@ -10,7 +10,7 @@ import { render } from './view'
 import {
   addTodoAction, removeTodoAction, updateTodoAction, updateAllAction,
   clearCompleteAction, updateViewAction,
-	beginEditAction, endEditAction, abortEditAction
+  beginEditAction, endEditAction, abortEditAction
 } from './action'
 
 const applyAction = (state, action) => action(state)
@@ -37,9 +37,10 @@ const listActions = el => {
   return merge(add, remove, complete, all, clear)
 }
 
-const editActions = el => {
-  const beginEdit = map(beginEditAction, match('label', dblclick(el)))
+const editActions = el =>
+  map(editTodo(el), match('label', dblclick(el))).switch()
 
+const editTodo = el => e => {
   const editKey = match('.edit', keyup(el))
   const enter = isKey(ENTER_KEY, editKey)
   const blurEdit = match('.edit', focusout(el))
@@ -48,7 +49,8 @@ const editActions = el => {
   const escape = isKey(ESC_KEY, editKey)
   const abortEdit = map(abortEditAction, escape)
 
-  return merge(beginEdit, saveEdit, abortEdit)
+  const endEdit = take(1, merge(saveEdit, abortEdit))
+  return startWith(beginEditAction(e), endEdit)
 }
 
 const filterActions = window =>
