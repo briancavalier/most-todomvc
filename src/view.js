@@ -39,7 +39,7 @@ export const renderTodo = editing => ({ id, description, complete }) =>
       label(description),
       button('.destroy')
     ]),
-    input('.edit', {props: {value: description}})
+    input('.edit', {props: {value: editing === id ? description : ''}})
   ])
 
 export const renderFooter = remaining =>

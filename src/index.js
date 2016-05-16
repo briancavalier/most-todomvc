@@ -1,4 +1,4 @@
-import { merge, map, tap, filter, scan, startWith, take } from 'most'
+import { merge, map, chain, tap, filter, scan, startWith, take } from 'most'
 import { submit, change, click, dblclick, keyup, focusout, hashchange } from '@most/dom-event'
 
 import snabbdom from 'snabbdom'
@@ -38,7 +38,7 @@ const listActions = el => {
 }
 
 const editActions = el =>
-  map(editTodo(el), match('label', dblclick(el))).switch()
+  chain(editTodo(el), match('label', dblclick(el)))
 
 const editTodo = el => e => {
   const editKey = match('.edit', keyup(el))

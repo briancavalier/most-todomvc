@@ -26558,7 +26558,7 @@ var listActions = function listActions(el) {
 };
 
 var editActions = function editActions(el) {
-  return (0, _most.map)(editTodo(el), match('label', (0, _domEvent.dblclick)(el))).switch();
+  return (0, _most.chain)(editTodo(el), match('label', (0, _domEvent.dblclick)(el)));
 };
 
 var editTodo = function editTodo(el) {
@@ -26757,7 +26757,7 @@ var renderTodo = exports.renderTodo = function renderTodo(editing) {
     var id = _ref3.id;
     var description = _ref3.description;
     var complete = _ref3.complete;
-    return li({ class: { completed: complete, editing: editing === id }, attrs: { 'data-id': id } }, [div('.view', [input('.toggle', { props: { type: 'checkbox', checked: complete } }), label(description), button('.destroy')]), input('.edit', { props: { value: description } })]);
+    return li({ class: { completed: complete, editing: editing === id }, attrs: { 'data-id': id } }, [div('.view', [input('.toggle', { props: { type: 'checkbox', checked: complete } }), label(description), button('.destroy')]), input('.edit', { props: { value: editing === id ? description : '' } })]);
   };
 };
 
