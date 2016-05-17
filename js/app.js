@@ -26490,8 +26490,10 @@ var endEdit = function endEdit(_ref8) {
 
 var endEditAction = exports.endEditAction = seq(toIdAndDescription, endEdit, editTodo);
 
-},{"./todos":216,"@most/prelude":4}],215:[function(require,module,exports){
+},{"./todos":217,"@most/prelude":4}],215:[function(require,module,exports){
 'use strict';
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var _most = require('most');
 
@@ -26514,6 +26516,8 @@ var _class = require('snabbdom/modules/class');
 var _class2 = _interopRequireDefault(_class);
 
 var _view = require('./view');
+
+var _store = require('./store');
 
 var _action = require('./action');
 
@@ -26593,17 +26597,50 @@ var updateApp = function updateApp(node, state) {
   return patch(node, (0, _view.render)(state));
 };
 
-var initialState = { todos: [], editing: '', view: 'all' };
+/* global localStorage */
 
-todos(window, container, initialState).reduce(updateApp, root);
+var _initStore = (0, _store.initStore)(localStorage, 'todos', { todos: [], editing: '', view: 'all' });
 
-},{"./action":214,"./view":217,"@most/dom-event":1,"most":164,"snabbdom":206,"snabbdom/modules/attributes":203,"snabbdom/modules/class":204,"snabbdom/modules/props":205}],216:[function(require,module,exports){
+var _initStore2 = _slicedToArray(_initStore, 2);
+
+var initialState = _initStore2[0];
+var store = _initStore2[1];
+
+var updateStore = function updateStore(store, value) {
+  return { seed: store(value), value: value };
+};
+
+todos(window, container, initialState).loop(updateStore, store).reduce(updateApp, root);
+
+},{"./action":214,"./store":216,"./view":218,"@most/dom-event":1,"most":164,"snabbdom":206,"snabbdom/modules/attributes":203,"snabbdom/modules/class":204,"snabbdom/modules/props":205}],216:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var initStore = exports.initStore = function initStore(storage, key, defaultValue) {
+  return [getItemOrDefault(storage, key, defaultValue), store(storage, key)];
+};
+
+var store = function store(storage, key) {
+  return function (value) {
+    storage.setItem(key, JSON.stringify(value));
+    return store(storage, key);
+  };
+};
+
+var getItemOrDefault = function getItemOrDefault(storage, key, defaultValue) {
+  var data = storage.getItem(key);
+  return data == null ? defaultValue : JSON.parse(data);
+};
+
+},{}],217:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.notComplete = exports.isComplete = exports.removeComplete = exports.updateAllComplete = exports.updateComplete = exports.updateDescription = exports.removeTodo = exports.addTodo = exports.findTodoIndex = exports.newTodo = exports.emptyTodos = undefined;
+exports.notComplete = exports.isComplete = exports.removeComplete = exports.updateAllComplete = exports.updateComplete = exports.updateDescription = exports.removeTodo = exports.addTodo = exports.findTodoIndex = exports.newTodo = undefined;
 
 var _prelude = require('@most/prelude');
 
@@ -26615,9 +26652,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 // type Id = Uuid
 // data Todo = { id::Id, description::string, complete::boolean }
-
-// emptyTodos :: [Todo]
-var emptyTodos = exports.emptyTodos = [];
 
 // newTodo :: Id -> string -> boolean -> Todo
 var newTodo = exports.newTodo = function newTodo(id, description, complete) {
@@ -26689,7 +26723,7 @@ var notComplete = exports.notComplete = function notComplete(todo) {
   return !isComplete(todo);
 };
 
-},{"@most/prelude":4,"uuid4":212}],217:[function(require,module,exports){
+},{"@most/prelude":4,"uuid4":212}],218:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -26782,4 +26816,4 @@ var stateClasses = function stateClasses(total, remaining, complete, view) {
   return Object.assign({ all: view === 'all', active: view === 'active', complete: view === 'completed' }, cardinality('todos', total), cardinality('complete', complete), cardinality('remaining', remaining));
 };
 
-},{"./todos":216,"hyperscript-helpers":93,"snabbdom/h":200,"snabbdom/thunk":207}]},{},[215]);
+},{"./todos":217,"hyperscript-helpers":93,"snabbdom/h":200,"snabbdom/thunk":207}]},{},[215]);

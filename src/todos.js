@@ -4,9 +4,6 @@ import newId from 'uuid4'
 // type Id = Uuid
 // data Todo = { id::Id, description::string, complete::boolean }
 
-// emptyTodos :: [Todo]
-export const emptyTodos = []
-
 // newTodo :: Id -> string -> boolean -> Todo
 export const newTodo = (id, description, complete) =>
   ({ id, description, complete })

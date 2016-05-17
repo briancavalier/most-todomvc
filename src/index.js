@@ -7,6 +7,7 @@ import attrs from 'snabbdom/modules/attributes'
 import clss from 'snabbdom/modules/class'
 
 import { render } from './view'
+import { initStore } from './store'
 import {
   addTodoAction, removeTodoAction, updateTodoAction, updateAllAction,
   clearCompleteAction, updateViewAction,
@@ -67,6 +68,8 @@ const container = root.parentNode
 const patch = snabbdom.init([props, attrs, clss])
 const updateApp = (node, state) => patch(node, render(state))
 
-const initialState = { todos: [], editing: '', view: 'all' }
+/* global localStorage */
+const [initialState, store] = initStore(localStorage, 'todos', { todos: [], editing: '', view: 'all' })
+const updateStore = (store, value) => ({ seed: store(value), value })
 
-todos(window, container, initialState).reduce(updateApp, root)
+todos(window, container, initialState).loop(updateStore, store).reduce(updateApp, root)
