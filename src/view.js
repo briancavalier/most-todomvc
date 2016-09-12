@@ -1,5 +1,4 @@
 import h from 'snabbdom/h'
-import thunk from 'snabbdom/thunk'
 import hh from 'hyperscript-helpers'
 import { isComplete } from './todos'
 
@@ -11,9 +10,9 @@ export const render = ({ todos, editing, view }) =>
 
 export const renderApp = (todos, editing, view, { remaining, complete }) =>
   section('.todoapp', { class: stateClasses(todos.length, remaining, complete, view) }, [
-    thunk('header', renderHeader),
-    thunk('todos', renderTodos, todos, editing),
-    thunk('footer', renderFooter, remaining, complete)
+  	renderHeader(),
+	  renderTodos(todos, editing),
+	  renderFooter(remaining, complete)
   ])
 
 export const renderHeader = () =>
@@ -27,7 +26,7 @@ export const renderHeader = () =>
 export const renderTodos = (todos, editing) =>
   section('.main', [
     input('.toggle-all',
-      {props: {type: 'checkbox', checked: todos.every(isComplete)}}),
+      { props: { type: 'checkbox', checked: todos.every(isComplete) } }),
     label({ attrs: { for: 'toggle-all' } }),
     ul('.todo-list', todos.map(renderTodo(editing)))
   ])
@@ -61,8 +60,16 @@ const count = todos => {
   return { complete, remaining: todos.length - complete }
 }
 
-const cardinality = (name, n) =>
-  ({ [name + '-0']: n === 0, [name + '-1']: n === 1, [name + '-n']: n > 1 })
+const cardinality = (name, n) => {
+  // FIXME: Buble errors on computed property names here
+  // Error parsing /Users/brian/Projects/cujojs/@most/todomvc/src/view.js:
+  // Unexpected token (88:46) in /Users/brian/Projects/cujojs/@most/todomvc/src/view.js
+  const classes = {}
+  classes[`${name}-0`] = n === 0
+  classes[`${name}-1`] = n === 1
+  classes[`${name}-n`] = n > 1
+  return classes
+}
 
 const stateClasses = (total, remaining, complete, view) =>
   Object.assign(

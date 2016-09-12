@@ -20,34 +20,34 @@ const setTodos = f => ({ todos, editing, view }) =>
 
 const viewFromHash = hash => hash.replace(/^.*#\/?/, '') || 'all'
 
-const seq = (...fs) => fs.reduceRight(compose)
+const pipe = (...fs) => fs.reduceRight(compose)
 
-const resetForm = ([value, form]) => (form.reset(), value)
+const resetForm = ([value, form]) => (form.reset(), value) // eslint-disable-line no-sequences
 
 const withFirstValue = e => [e.target.elements[0].value, e.target]
-export const addTodoAction = seq(withFirstValue, resetForm, addTodo, setTodos)
+export const addTodoAction = pipe(withFirstValue, resetForm, addTodo, setTodos)
 
-export const removeTodoAction = seq(toDataId, removeTodo, setTodos)
+export const removeTodoAction = pipe(toDataId, removeTodo, setTodos)
 
-export const updateTodoAction = seq(toIdAndComplete, updateComplete, setTodos)
+export const updateTodoAction = pipe(toIdAndComplete, updateComplete, setTodos)
 
-export const updateAllAction = seq(toChecked, updateAllComplete, setTodos)
+export const updateAllAction = pipe(toChecked, updateAllComplete, setTodos)
 
 export const clearCompleteAction = () => setTodos(removeComplete)
 
 const updateView = view => ({ todos, editing }) => ({ todos, editing, view })
-export const updateViewAction = seq(e => e.newURL, viewFromHash, updateView)
+export const updateViewAction = pipe(e => e.newURL, viewFromHash, updateView)
 
 const beginEdit = editing => ({ todos, view }) => ({ todos, editing, view })
-export const beginEditAction = seq(toDataId, beginEdit)
+export const beginEditAction = pipe(toDataId, beginEdit)
 
 const editTodo = f => ({ todos, view }) =>
   ({ todos: f(todos), editing: '', view })
 
 const abortEdit = () => id
-export const abortEditAction = seq(toDataId, abortEdit, editTodo)
+export const abortEditAction = pipe(toDataId, abortEdit, editTodo)
 
 const endEdit = ({ id, description }) =>
   description.length === 0 ? removeTodo(id) : updateDescription(id, description)
 
-export const endEditAction = seq(toIdAndDescription, endEdit, editTodo)
+export const endEditAction = pipe(toIdAndDescription, endEdit, editTodo)

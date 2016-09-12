@@ -1,7 +1,9 @@
 import { replace, remove } from '@most/prelude'
-import newId from 'uuid4'
 
-// type Id = Uuid
+let id = 0
+const newId = () => `${id++}`
+
+// type Id = string
 // data Todo = { id::Id, description::string, complete::boolean }
 
 // newTodo :: Id -> string -> boolean -> Todo
