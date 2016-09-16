@@ -14,7 +14,7 @@
     "jsinspect": "^0.8.0",
     "most": "^1.0.3",
     "rollup": "^0.35.9",
-    "rollup-plugin-buble": "^0.13.0",
+    "rollup-plugin-buba": "1.0.1",
     "rollup-plugin-commonjs": "^4.1.0",
     "rollup-plugin-node-resolve": "^2.0.0",
     "snabbdom": "^0.5.3"
