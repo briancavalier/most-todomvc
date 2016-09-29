@@ -6,7 +6,7 @@ const newId = () => `${id++}`
 // type Id = string
 // data Todo = { id::Id, description::string, complete::boolean }
 
-// newTodo :: Id -> string -> boolean -> Todo
+// newTodo :: (Id, string, boolean) -> Todo
 export const newTodo = (id, description, complete) =>
   ({ id, description, complete })
 
@@ -21,7 +21,7 @@ export const addTodo = description => todos =>
 export const removeTodo = id => todos =>
   remove(findTodoIndex(id, todos), todos)
 
-// updateDescription :: Id -> description -> [Todo] -> [Todo]
+// updateDescription :: (Id, description) -> [Todo] -> [Todo]
 export const updateDescription = (id, description) => todos => {
   const i = findTodoIndex(id, todos)
   return i < 0 ? todos
