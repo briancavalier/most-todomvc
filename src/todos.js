@@ -1,7 +1,7 @@
 import { replace, remove } from '@most/prelude'
 
 let id = 0
-const newId = () => `${id++}`
+const newId = () => `${Date.now()}${++id}`
 
 // type Id = string
 // data Todo = { id::Id, description::string, complete::boolean }

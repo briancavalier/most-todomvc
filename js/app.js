@@ -27,7 +27,16 @@ function cons(x, a) {
 
 // append :: a -> [a] -> [a]
 // a with x appended
+function append(x, a) {
+  var l = a.length;
+  var b = new Array(l + 1);
+  for (var i = 0; i < l; ++i) {
+    b[i] = a[i];
+  }
 
+  b[l] = x;
+  return b;
+}
 
 // drop :: Int -> [a] -> [a]
 // drop first n elements
@@ -115,7 +124,40 @@ function replace(x, i, a) {
 
 // remove :: Int -> [a] -> [a]
 // remove element at index
+function remove(i, a) {
+  // eslint-disable-line complexity
+  if (i < 0) {
+    throw new TypeError('i must be >= 0');
+  }
 
+  var l = a.length;
+  if (l === 0 || i >= l) {
+    // exit early if index beyond end of array
+    return a;
+  }
+
+  if (l === 1) {
+    // exit early if index in bounds and length === 1
+    return [];
+  }
+
+  return unsafeRemove(i, a, l - 1);
+}
+
+// unsafeRemove :: Int -> [a] -> Int -> [a]
+// Internal helper to remove element at index
+function unsafeRemove(i, a, l) {
+  var b = new Array(l);
+  var j;
+  for (j = 0; j < i; ++j) {
+    b[j] = a[j];
+  }
+  for (j = i; j < l; ++j) {
+    b[j] = a[j + 1];
+  }
+
+  return b;
+}
 
 // removeAll :: (a -> boolean) -> [a] -> [a]
 // remove all elements matching a predicate
@@ -164,7 +206,19 @@ var compose = function (f, g) { return function (x) { return f(g(x)); }; };
 var apply = function (f, x) { return f(x); };
 
 // curry2 :: ((a, b) -> c) -> (a -> b -> c)
-
+function curry2(f) {
+  function curried(a, b) {
+    switch (arguments.length) {
+      case 0:
+        return curried;
+      case 1:
+        return function (b) { return f(a, b); };
+      default:
+        return f(a, b);
+    }
+  }
+  return curried;
+}
 
 // curry3 :: ((a, b, c) -> d) -> (a -> b -> c -> d)
 
@@ -306,6 +360,14 @@ function disposeSafely(disposable) {
  * @return {Disposable}
  */
 
+
+function disposePromise(disposablePromise) {
+  return disposablePromise.then(disposeOne);
+}
+
+function disposeOne(disposable) {
+  return disposable.dispose();
+}
 
 /**
  * Create a disposable proxy that allows its underlying disposable to
@@ -529,29 +591,18 @@ function IterableSource(iterable) {
 }
 
 IterableSource.prototype.run = function (sink, scheduler) {
-  return new IteratorProducer(getIterator(this.iterable), sink, scheduler);
+  return scheduler.asap(new PropagateTask(runProducer$1, getIterator(this.iterable), sink));
 };
 
-function IteratorProducer(iterator, sink, scheduler) {
-  this.scheduler = scheduler;
-  this.iterator = iterator;
-  this.task = new PropagateTask(runProducer$1, this, sink);
-  scheduler.asap(this.task);
-}
+function runProducer$1(t, iterator, sink) {
+  var r = iterator.next();
 
-IteratorProducer.prototype.dispose = function () {
-  return this.task.dispose();
-};
-
-function runProducer$1(t, producer, sink) {
-  var x = producer.iterator.next();
-  if (x.done) {
-    sink.end(t, x.value);
-  } else {
-    sink.event(t, x.value);
+  while (!r.done && this.active) {
+    sink.event(t, r.value);
+    r = iterator.next();
   }
 
-  producer.scheduler.asap(producer.task);
+  sink.end(t, r.value);
 }
 
 function symbolObservablePonyfill(root) {
@@ -573,11 +624,18 @@ function symbolObservablePonyfill(root) {
 }
 
 /* global window */
-var root$1 = undefined;
-if (typeof global !== 'undefined') {
-	root$1 = global;
+var root$1;
+
+if (typeof self !== 'undefined') {
+  root$1 = self;
 } else if (typeof window !== 'undefined') {
-	root$1 = window;
+  root$1 = window;
+} else if (typeof global !== 'undefined') {
+  root$1 = global;
+} else if (typeof module !== 'undefined') {
+  root$1 = module;
+} else {
+  root$1 = Function('return this')();
 }
 
 var result = symbolObservablePonyfill(root$1);
@@ -680,19 +738,9 @@ function from(a) {
 /**
  * Create a stream that emits the current time periodically
  * @param {Number} period periodicity of events in millis
- * @param {*} value value to emit each period
+ * @param {*} deprecatedValue @deprecated value to emit each period
  * @returns {Stream} new stream that emits the current time every period
  */
-
-
-function Periodic(period, value) {
-  this.period = period;
-  this.value = value;
-}
-
-Periodic.prototype.run = function (sink, scheduler) {
-  return scheduler.periodic(this.period, PropagateTask.event(this.value, sink));
-};
 
 /** @license MIT License (c) copyright 2010-2016 original author or authors */
 /** @author Brian Cavalier */
@@ -1032,14 +1080,16 @@ function SubscribeObserver(fatalError$$1, subscriber, disposable) {
 }
 
 SubscribeObserver.prototype.event = function (t, x) {
-  if (typeof this.subscriber.next === 'function') {
+  if (!this.disposable.disposed && typeof this.subscriber.next === 'function') {
     this.subscriber.next(x);
   }
 };
 
 SubscribeObserver.prototype.end = function (t, x) {
-  var s = this.subscriber;
-  doDispose(this.fatalError, s, s.complete, s.error, this.disposable, x);
+  if (!this.disposable.disposed) {
+    var s = this.subscriber;
+    doDispose(this.fatalError, s, s.complete, s.error, this.disposable, x);
+  }
 };
 
 SubscribeObserver.prototype.error = function (t, e) {
@@ -2688,6 +2738,8 @@ function copy$2(src, srcIndex, dst, dstIndex, len) {
 /** @author John Hann */
 
 var map$4 = map;
+var tail$2 = tail;
+
 /**
  * Combine streams pairwise (or tuple-wise) by index by applying f to values
  * at corresponding indices.  The returned stream ends when any of the input
@@ -3576,14 +3628,6 @@ var flatMapError = recoverWith;
  */
 
 
-function ErrorSource(e) {
-  this.value = e;
-}
-
-ErrorSource.prototype.run = function (sink, scheduler) {
-  return scheduler.asap(new PropagateTask(runError, this.value, sink));
-};
-
 function runError(t, e, sink) {
   sink.error(t, e);
 }
@@ -3642,7 +3686,7 @@ var MulticastDisposable = function MulticastDisposable(source, sink) {
   this.disposed = false;
 };
 
-MulticastDisposable.prototype.dispose = function dispose () {
+MulticastDisposable.prototype.dispose = function dispose() {
   if (this.disposed) {
     return;
   }
@@ -3667,129 +3711,13 @@ function tryEnd$1(t, x, sink) {
   }
 }
 
-var dispose$1$1 = function (disposable) { return disposable.dispose(); };
+var dispose = function (disposable) {
+  return disposable.dispose();
+};
 
 var emptyDisposable = {
   dispose: function dispose$1() {}
 };
-
-/** @license MIT License (c) copyright 2010-2016 original author or authors */
-
-// Non-mutating array operations
-
-// cons :: a -> [a] -> [a]
-// a with x prepended
-
-
-// append :: a -> [a] -> [a]
-// a with x appended
-function append$1(x, a) {
-  var l = a.length;
-  var b = new Array(l + 1);
-  for (var i = 0; i < l; ++i) {
-    b[i] = a[i];
-  }
-
-  b[l] = x;
-  return b;
-}
-
-// drop :: Int -> [a] -> [a]
-// drop first n elements
-
-
-// tail :: [a] -> [a]
-// drop head element
-
-
-// copy :: [a] -> [a]
-// duplicate a (shallow duplication)
-
-
-// map :: (a -> b) -> [a] -> [b]
-// transform each element with f
-
-
-// reduce :: (a -> b -> a) -> a -> [b] -> a
-// accumulate via left-fold
-
-
-// replace :: a -> Int -> [a]
-// replace element at index
-
-
-// remove :: Int -> [a] -> [a]
-// remove element at index
-function remove$1$1(i, a) {
-  // eslint-disable-line complexity
-  if (i < 0) {
-    throw new TypeError('i must be >= 0');
-  }
-
-  var l = a.length;
-  if (l === 0 || i >= l) {
-    // exit early if index beyond end of array
-    return a;
-  }
-
-  if (l === 1) {
-    // exit early if index in bounds and length === 1
-    return [];
-  }
-
-  return unsafeRemove$1(i, a, l - 1);
-}
-
-// unsafeRemove :: Int -> [a] -> Int -> [a]
-// Internal helper to remove element at index
-function unsafeRemove$1(i, a, l) {
-  var b = new Array(l);
-  var j;
-  for (j = 0; j < i; ++j) {
-    b[j] = a[j];
-  }
-  for (j = i; j < l; ++j) {
-    b[j] = a[j + 1];
-  }
-
-  return b;
-}
-
-// removeAll :: (a -> boolean) -> [a] -> [a]
-// remove all elements matching a predicate
-
-
-// findIndex :: a -> [a] -> Int
-// find index of x in a, from the left
-function findIndex$1(x, a) {
-  for (var i = 0, l = a.length; i < l; ++i) {
-    if (x === a[i]) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-// isArrayLike :: * -> boolean
-// Return true iff x is array-like
-
-/** @license MIT License (c) copyright 2010-2016 original author or authors */
-
-// id :: a -> a
-
-
-// compose :: (b -> c) -> (a -> b) -> (a -> c)
-
-
-// apply :: (a -> b) -> a -> b
-
-
-// curry2 :: ((a, b) -> c) -> (a -> b -> c)
-
-
-// curry3 :: ((a, b, c) -> d) -> (a -> b -> c -> d)
-
-/** @license MIT License (c) copyright 2016 original author or authors */
 
 var MulticastSource = function MulticastSource(source) {
   this.source = source;
@@ -3797,7 +3725,7 @@ var MulticastSource = function MulticastSource(source) {
   this._disposable = emptyDisposable;
 };
 
-MulticastSource.prototype.run = function run (sink, scheduler) {
+MulticastSource.prototype.run = function run(sink, scheduler) {
   var n = this.add(sink);
   if (n === 1) {
     this._disposable = this.source.run(this, scheduler);
@@ -3805,28 +3733,28 @@ MulticastSource.prototype.run = function run (sink, scheduler) {
   return new MulticastDisposable(this, sink);
 };
 
-MulticastSource.prototype._dispose = function _dispose () {
+MulticastSource.prototype._dispose = function _dispose() {
   var disposable = this._disposable;
   this._disposable = emptyDisposable;
-  return Promise.resolve(disposable).then(dispose$1$1);
+  return Promise.resolve(disposable).then(dispose);
 };
 
-MulticastSource.prototype.add = function add (sink) {
-  this.sinks = append$1(sink, this.sinks);
+MulticastSource.prototype.add = function add(sink) {
+  this.sinks = append(sink, this.sinks);
   return this.sinks.length;
 };
 
-MulticastSource.prototype.remove = function remove$1 (sink) {
-  var i = findIndex$1(sink, this.sinks);
+MulticastSource.prototype.remove = function remove$1(sink) {
+  var i = findIndex(sink, this.sinks);
   // istanbul ignore next
   if (i >= 0) {
-    this.sinks = remove$1$1(i, this.sinks);
+    this.sinks = remove(i, this.sinks);
   }
 
   return this.sinks.length;
 };
 
-MulticastSource.prototype.event = function event (time, value) {
+MulticastSource.prototype.event = function event(time, value) {
   var s = this.sinks;
   if (s.length === 1) {
     return s[0].event(time, value);
@@ -3836,14 +3764,14 @@ MulticastSource.prototype.event = function event (time, value) {
   }
 };
 
-MulticastSource.prototype.end = function end (time, value) {
+MulticastSource.prototype.end = function end(time, value) {
   var s = this.sinks;
   for (var i = 0; i < s.length; ++i) {
     tryEnd$1(time, value, s[i]);
   }
 };
 
-MulticastSource.prototype.error = function error (time, err) {
+MulticastSource.prototype.error = function error(time, err) {
   var s = this.sinks;
   for (var i = 0; i < s.length; ++i) {
     s[i].error(time, err);
@@ -4034,15 +3962,18 @@ Stream.prototype.transduce = function (transducer) {
  * @param {function(x:*):Stream} f chaining function, must return a Stream
  * @returns {Stream} new stream containing all events from each stream returned by f
  */
-Stream.prototype.flatMap = Stream.prototype.chain = function (f) {
+Stream.prototype.chain = function (f) {
   return flatMap(f, this);
 };
 
+// @deprecated use chain instead
+Stream.prototype.flatMap = Stream.prototype.chain;
+
 /**
- * Monadic join. Flatten a Stream<Stream<X>> to Stream<X> by merging inner
- * streams to the outer. Event arrival times are preserved.
- * @returns {Stream<X>} new stream containing all events of all inner streams
- */
+* Monadic join. Flatten a Stream<Stream<X>> to Stream<X> by merging inner
+* streams to the outer. Event arrival times are preserved.
+* @returns {Stream<X>} new stream containing all events of all inner streams
+*/
 Stream.prototype.join = function () {
   return join(this);
 };
@@ -4054,9 +3985,12 @@ Stream.prototype.join = function () {
  * @returns {Stream} new stream that emits all events from the original stream,
  * followed by all events from the stream returned by f.
  */
-Stream.prototype.continueWith = Stream.prototype.flatMapEnd = function (f) {
+Stream.prototype.continueWith = function (f) {
   return continueWith(f, this);
 };
+
+// @deprecated use continueWith instead
+Stream.prototype.flatMapEnd = Stream.prototype.continueWith;
 
 Stream.prototype.concatMap = function (f) {
   return concatMap(f, this);
@@ -4149,9 +4083,12 @@ Stream.prototype.zip = function (f /*, ...streams*/) {
  * of the most recent inner stream.
  * @returns {Stream} switching stream
  */
-Stream.prototype.switch = Stream.prototype.switchLatest = function () {
+Stream.prototype.switchLatest = function () {
   return switchLatest(this);
 };
+
+// @deprecated use switchLatest instead
+Stream.prototype.switch = Stream.prototype.switchLatest;
 
 // -----------------------------------------------------------------------
 // Filtering
@@ -4255,33 +4192,39 @@ Stream.prototype.skipWhile = function (p) {
  * @returns {Stream} new stream containing only events that occur before
  * the first event in signal.
  */
-Stream.prototype.until = Stream.prototype.takeUntil = function (signal) {
+Stream.prototype.until = function (signal) {
   return takeUntil(signal, this);
 };
 
+// @deprecated use until instead
+Stream.prototype.takeUntil = Stream.prototype.until;
+
 /**
- * stream:                    -a-b-c-d-e-f-g->
- * signal:                    -------x
- * takeUntil(signal, stream): -------d-e-f-g->
- * @param {Stream} signal retain only events in stream at or after the first
- * event in signal
- * @returns {Stream} new stream containing only events that occur after
- * the first event in signal.
- */
-Stream.prototype.since = Stream.prototype.skipUntil = function (signal) {
+* stream:                    -a-b-c-d-e-f-g->
+* signal:                    -------x
+* takeUntil(signal, stream): -------d-e-f-g->
+* @param {Stream} signal retain only events in stream at or after the first
+* event in signal
+* @returns {Stream} new stream containing only events that occur after
+* the first event in signal.
+*/
+Stream.prototype.since = function (signal) {
   return skipUntil(signal, this);
 };
 
+// @deprecated use since instead
+Stream.prototype.skipUntil = Stream.prototype.since;
+
 /**
- * stream:                    -a-b-c-d-e-f-g->
- * timeWindow:                -----s
- * s:                               -----t
- * stream.during(timeWindow): -----c-d-e-|
- * @param {Stream<Stream>} timeWindow a stream whose first event (s) represents
- *  the window start time.  That event (s) is itself a stream whose first event (t)
- *  represents the window end time
- * @returns {Stream} new stream containing only events within the provided timespan
- */
+* stream:                    -a-b-c-d-e-f-g->
+* timeWindow:                -----s
+* s:                               -----t
+* stream.during(timeWindow): -----c-d-e-|
+* @param {Stream<Stream>} timeWindow a stream whose first event (s) represents
+*  the window start time.  That event (s) is itself a stream whose first event (t)
+*  represents the window end time
+* @returns {Stream} new stream containing only events within the provided timespan
+*/
 Stream.prototype.during = function (timeWindow) {
   return during(timeWindow, this);
 };
@@ -4343,9 +4286,12 @@ Stream.prototype.debounce = function (period) {
  * event order, but timeshifts events based on promise resolution time.
  * @returns {Stream<X>} stream containing non-promise values
  */
-Stream.prototype.await = function () {
+Stream.prototype.awaitPromises = function () {
   return awaitPromises(this);
 };
+
+// @deprecated use awaitPromises instead
+Stream.prototype.await = Stream.prototype.awaitPromises;
 
 // -----------------------------------------------------------------------
 // Error handling
@@ -4359,9 +4305,12 @@ Stream.prototype.await = function () {
  * @param {function(error:*):Stream} f function which returns a new stream
  * @returns {Stream} new stream which will recover from an error by calling f
  */
-Stream.prototype.recoverWith = Stream.prototype.flatMapError = function (f) {
+Stream.prototype.recoverWith = function (f) {
   return flatMapError(f, this);
 };
+
+// @deprecated use recoverWith instead
+Stream.prototype.flatMapError = Stream.prototype.recoverWith;
 
 // -----------------------------------------------------------------------
 // Multicasting
@@ -4375,97 +4324,68 @@ Stream.prototype.multicast = function () {
   return multicast(this);
 };
 
+// export the instance of the defaultScheduler for third-party libraries
+// export an implementation of Task used internally for third-party libraries
+
 /** @license MIT License (c) copyright 2015-2016 original author or authors */
 /** @author Brian Cavalier */
 // domEvent :: (EventTarget t, Event e) => String -> t -> boolean=false -> Stream e
 var domEvent = function (event, node, capture) {
-  if ( capture === void 0 ) capture = false;
+  if (capture === void 0) capture = false;
 
   return new Stream(new DomEvent(event, node, capture));
 };
 
-
-
-
 var focusout = function (node, capture) {
-  if ( capture === void 0 ) capture = false;
+  if (capture === void 0) capture = false;
 
   return domEvent('focusout', node, capture);
 };
 var click = function (node, capture) {
-  if ( capture === void 0 ) capture = false;
+  if (capture === void 0) capture = false;
 
   return domEvent('click', node, capture);
 };
 var dblclick = function (node, capture) {
-  if ( capture === void 0 ) capture = false;
+  if (capture === void 0) capture = false;
 
   return domEvent('dblclick', node, capture);
 };
-
-
-
-
-
-
-
 var change = function (node, capture) {
-  if ( capture === void 0 ) capture = false;
+  if (capture === void 0) capture = false;
 
   return domEvent('change', node, capture);
 };
-
 var submit = function (node, capture) {
-  if ( capture === void 0 ) capture = false;
+  if (capture === void 0) capture = false;
 
   return domEvent('submit', node, capture);
 };
-
-
 var keyup = function (node, capture) {
-  if ( capture === void 0 ) capture = false;
+  if (capture === void 0) capture = false;
 
   return domEvent('keyup', node, capture);
 };
-
-
-
-
-
-
 var hashchange = function (node, capture) {
-  if ( capture === void 0 ) capture = false;
+  if (capture === void 0) capture = false;
 
   return domEvent('hashchange', node, capture);
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 var DomEvent = function DomEvent(event, node, capture) {
   this.event = event;
   this.node = node;
   this.capture = capture;
 };
 
-DomEvent.prototype.run = function run (sink, scheduler) {
-    var this$1 = this;
+DomEvent.prototype.run = function run(sink, scheduler) {
+  var this$1 = this;
 
-  var send = function (e) { return tryEvent$2(scheduler.now(), e, sink); };
-  var dispose = function () { return this$1.node.removeEventListener(this$1.event, send, this$1.capture); };
+  var send = function (e) {
+    return tryEvent$2(scheduler.now(), e, sink);
+  };
+  var dispose = function () {
+    return this$1.node.removeEventListener(this$1.event, send, this$1.capture);
+  };
 
   this.node.addEventListener(this.event, send, this.capture);
 
@@ -4876,9 +4796,13 @@ module.exports = { create: updateProps, update: updateProps };
 });
 
 var attributes = createCommonjsModule(function (module) {
+var NamespaceURIs = {
+  "xlink": "http://www.w3.org/1999/xlink"
+};
+
 var booleanAttrs = ["allowfullscreen", "async", "autofocus", "autoplay", "checked", "compact", "controls", "declare", "default", "defaultchecked", "defaultmuted", "defaultselected", "defer", "disabled", "draggable", "enabled", "formnovalidate", "hidden", "indeterminate", "inert", "ismap", "itemscope", "loop", "multiple", "muted", "nohref", "noresize", "noshade", "novalidate", "nowrap", "open", "pauseonexit", "readonly", "required", "reversed", "scoped", "seamless", "selected", "sortable", "spellcheck", "translate", "truespeed", "typemustmatch", "visible"];
 
-var booleanAttrsDict = {};
+var booleanAttrsDict = Object.create(null);
 for (var i = 0, len = booleanAttrs.length; i < len; i++) {
   booleanAttrsDict[booleanAttrs[i]] = true;
 }
@@ -4889,7 +4813,8 @@ function updateAttrs(oldVnode, vnode) {
       old,
       elm = vnode.elm,
       oldAttrs = oldVnode.data.attrs,
-      attrs = vnode.data.attrs;
+      attrs = vnode.data.attrs,
+      namespaceSplit;
 
   if (!oldAttrs && !attrs) return;
   oldAttrs = oldAttrs || {};
@@ -4900,8 +4825,10 @@ function updateAttrs(oldVnode, vnode) {
     cur = attrs[key];
     old = oldAttrs[key];
     if (old !== cur) {
-      // TODO: add support to namespaced attributes (setAttributeNS)
-      if (!cur && booleanAttrsDict[key]) elm.removeAttribute(key);else elm.setAttribute(key, cur);
+      if (!cur && booleanAttrsDict[key]) elm.removeAttribute(key);else {
+        namespaceSplit = key.split(":");
+        if (namespaceSplit.length > 1 && NamespaceURIs.hasOwnProperty(namespaceSplit[0])) elm.setAttributeNS(NamespaceURIs[namespaceSplit[0]], key, cur);else elm.setAttribute(key, cur);
+      }
     }
   }
   //remove removed attributes
@@ -5046,127 +4973,13 @@ module.exports = exports['default'];
 
 var hh = unwrapExports(index);
 
-/** @license MIT License (c) copyright 2010-2016 original author or authors */
-
-// Non-mutating array operations
-
-// cons :: a -> [a] -> [a]
-// a with x prepended
-
-
-// append :: a -> [a] -> [a]
-// a with x appended
-
-
-// drop :: Int -> [a] -> [a]
-// drop first n elements
-
-
-// tail :: [a] -> [a]
-// drop head element
-
-
-// copy :: [a] -> [a]
-// duplicate a (shallow duplication)
-
-
-// map :: (a -> b) -> [a] -> [b]
-// transform each element with f
-
-
-// reduce :: (a -> b -> a) -> a -> [b] -> a
-// accumulate via left-fold
-
-
-// replace :: a -> Int -> [a]
-// replace element at index
-function replace$2(x, i, a) {
-  // eslint-disable-line complexity
-  if (i < 0) {
-    throw new TypeError('i must be >= 0');
-  }
-
-  var l = a.length;
-  var b = new Array(l);
-  for (var j = 0; j < l; ++j) {
-    b[j] = i === j ? x : a[j];
-  }
-  return b;
-}
-
-// remove :: Int -> [a] -> [a]
-// remove element at index
-function remove$2(i, a) {
-  // eslint-disable-line complexity
-  if (i < 0) {
-    throw new TypeError('i must be >= 0');
-  }
-
-  var l = a.length;
-  if (l === 0 || i >= l) {
-    // exit early if index beyond end of array
-    return a;
-  }
-
-  if (l === 1) {
-    // exit early if index in bounds and length === 1
-    return [];
-  }
-
-  return unsafeRemove$2(i, a, l - 1);
-}
-
-// unsafeRemove :: Int -> [a] -> Int -> [a]
-// Internal helper to remove element at index
-function unsafeRemove$2(i, a, l) {
-  var b = new Array(l);
-  var j;
-  for (j = 0; j < i; ++j) {
-    b[j] = a[j];
-  }
-  for (j = i; j < l; ++j) {
-    b[j] = a[j + 1];
-  }
-
-  return b;
-}
-
-// removeAll :: (a -> boolean) -> [a] -> [a]
-// remove all elements matching a predicate
-
-
-// findIndex :: a -> [a] -> Int
-// find index of x in a, from the left
-
-
-// isArrayLike :: * -> boolean
-// Return true iff x is array-like
-
-/** @license MIT License (c) copyright 2010-2016 original author or authors */
-
-// id :: a -> a
-var id$3 = function (x) { return x; };
-
-// compose :: (b -> c) -> (a -> b) -> (a -> c)
-var compose$2 = function (f, g) { return function (x) { return f(g(x)); }; };
-
-// apply :: (a -> b) -> a -> b
-
-
-// curry2 :: ((a, b) -> c) -> (a -> b -> c)
-
-
-// curry3 :: ((a, b, c) -> d) -> (a -> b -> c -> d)
-
-/** @license MIT License (c) copyright 2016 original author or authors */
-
-var id$2 = 0;
-var newId = function () { return ("" + (id$2++)); };
+var id$1 = 0;
+var newId = function () { return ("" + (Date.now()) + (++id$1)); };
 
 // type Id = string
 // data Todo = { id::Id, description::string, complete::boolean }
 
-// newTodo :: Id -> string -> boolean -> Todo
+// newTodo :: (Id, string, boolean) -> Todo
 var newTodo = function (id$$1, description, complete) { return ({ id: id$$1, description: description, complete: complete }); };
 
 var findTodoIndex = function (id$$1, todos) { return todos.findIndex(function (todo) { return todo.id === id$$1; }); };
@@ -5175,12 +4988,12 @@ var findTodoIndex = function (id$$1, todos) { return todos.findIndex(function (t
 var addTodo = function (description) { return function (todos) { return description.trim().length === 0 ? todos : todos.concat(newTodo(newId(), description, false)); }; };
 
 // removeTodo :: Id -> [Todo] -> [Todo]
-var removeTodo = function (id$$1) { return function (todos) { return remove$2(findTodoIndex(id$$1, todos), todos); }; };
+var removeTodo = function (id$$1) { return function (todos) { return remove(findTodoIndex(id$$1, todos), todos); }; };
 
-// updateDescription :: Id -> description -> [Todo] -> [Todo]
+// updateDescription :: (Id, description) -> [Todo] -> [Todo]
 var updateDescription = function (id$$1, description) { return function (todos) {
   var i = findTodoIndex(id$$1, todos);
-  return i < 0 ? todos : replace$2(newTodo(id$$1, description, todos[i].complete), i, todos);
+  return i < 0 ? todos : replace(newTodo(id$$1, description, todos[i].complete), i, todos);
 }; };
 
 // updateTodo :: (Id, boolean) -> [Todo] -> [Todo]
@@ -5190,7 +5003,7 @@ var updateComplete = function (ref) {
 
   return function (todos) {
   var i = findTodoIndex(id$$1, todos);
-  return i < 0 ? todos : replace$2(newTodo(id$$1, todos[i].description, complete), i, todos);
+  return i < 0 ? todos : replace(newTodo(id$$1, todos[i].description, complete), i, todos);
 };
 };
 
@@ -5319,7 +5132,7 @@ var pipe = function () {
 	var fs = [], len = arguments.length;
 	while ( len-- ) fs[ len ] = arguments[ len ];
 
-	return fs.reduceRight(compose$2);
+	return fs.reduceRight(compose);
 };
 
 var resetForm = function (ref) {
@@ -5363,7 +5176,7 @@ var editTodo$1 = function (f) { return function (ref) {
 	return ({ todos: f(todos), editing: '', view: view });
  }	};
 
-var abortEdit = function () { return id$3; };
+var abortEdit = function () { return id; };
 var abortEditAction = pipe(toDataId, abortEdit, editTodo$1);
 
 var endEdit = function (ref) {
